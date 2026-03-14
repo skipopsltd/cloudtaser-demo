@@ -1,0 +1,28 @@
+{
+  "title": "CloudCondom: EU Data Sovereignty on US Cloud",
+  "description": "See how CloudCondom keeps your secrets out of Kubernetes etcd and blocks /proc/environ reads — all while running on US cloud infrastructure.",
+  "details": {
+    "intro": {
+      "text": "intro.md"
+    },
+    "steps": [
+      {"text": "step1.md", "title": "Deploy a protected PostgreSQL pod"},
+      {"text": "step2.md", "title": "Verify secrets are not in Kubernetes"},
+      {"text": "step3.md", "title": "Confirm secrets work inside the pod"},
+      {"text": "step4.md", "title": "Try to read /proc/pid/environ"},
+      {"text": "step5.md", "title": "View the audit trail"}
+    ],
+    "finish": {
+      "text": "finish.md"
+    },
+    "assets": {
+      "host01": [
+        {"file": "setup.sh", "target": "/tmp/", "chmod": "+x"}
+      ]
+    }
+  },
+  "backend": {
+    "imageid": "kubernetes-kubeadm-1node"
+  },
+  "time": "10"
+}
