@@ -1,10 +1,10 @@
 #!/bin/bash
-# CloudCondom Demo — Pre-setup script
+# CloudTaser Demo — Pre-setup script
 # This runs before the user sees the environment
 
 set -euo pipefail
 
-echo "Setting up CloudCondom demo environment..."
+echo "Setting up CloudTaser demo environment..."
 
 # Install Vault in dev mode
 helm repo add hashicorp https://helm.releases.hashicorp.com
@@ -17,7 +17,7 @@ helm install vault hashicorp/vault \
 
 # Configure Vault with demo secrets
 kubectl exec -n vault vault-0 -- vault kv put secret/demo/postgres \
-  password="CloudCondom-Demo-2026!" \
+  password="CloudTaser-Demo-2026!" \
   username="postgres"
 
 # Enable Kubernetes auth in Vault
@@ -40,11 +40,11 @@ POLICY
 # Create service account for the demo pod
 kubectl create serviceaccount postgres-demo -n default
 
-# Install CloudCondom from bundled chart with demo values
+# Install CloudTaser from bundled chart with demo values
 # Images are pulled from ghcr.io/skipopsltd (public packages)
-helm install cloudcondom /tmp/chart \
-  --namespace cloudcondom-system --create-namespace \
+helm install cloudtaser /tmp/chart \
+  --namespace cloudtaser-system --create-namespace \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s
 
-echo "CloudCondom demo environment ready!"
+echo "CloudTaser demo environment ready!"

@@ -1,6 +1,6 @@
 # Demo Complete
 
-You've seen CloudCondom in action:
+You've seen CloudTaser in action:
 
 - **Secrets never touch Kubernetes** — no etcd, no K8s Secrets, no disk
 - **Applications work normally** — secrets are available as environment variables
@@ -9,7 +9,7 @@ You've seen CloudCondom in action:
 
 ## What's different from alternatives?
 
-| | CloudCondom | K8s Secrets | External Secrets Operator | Sealed Secrets |
+| | CloudTaser | K8s Secrets | External Secrets Operator | Sealed Secrets |
 |---|---|---|---|---|
 | Secrets in etcd | Never | Always | Always | Always |
 | /proc/environ protection | Yes (eBPF) | No | No | No |
@@ -20,6 +20,6 @@ You've seen CloudCondom in action:
 
 Ready to protect your infrastructure?
 
-**Schedule a demo with your team:** [cloudcondom.io](https://cloudcondom.io)
+**Schedule a demo with your team:** [cloudtaser.io](https://cloudtaser.io)
 
 **Contact us:** hello@enableops.io

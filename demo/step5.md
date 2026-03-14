@@ -1,11 +1,11 @@
 # View the Audit Trail
 
-CloudCondom logs every security event. Let's see the blocked `/proc/environ` read.
+CloudTaser logs every security event. Let's see the blocked `/proc/environ` read.
 
 **Check the eBPF agent logs:**
 
 ```bash
-kubectl logs -n cloudcondom-system daemonset/cloudcondom-ebpf --tail=20 | python3 -c "
+kubectl logs -n cloudtaser-system daemonset/cloudtaser-ebpf --tail=20 | python3 -c "
 import sys, json
 for line in sys.stdin:
     try:
@@ -14,7 +14,7 @@ for line in sys.stdin:
             print(json.dumps(evt, indent=2))
     except:
         pass
-" || kubectl logs -n cloudcondom-system daemonset/cloudcondom-ebpf --tail=5
+" || kubectl logs -n cloudtaser-system daemonset/cloudtaser-ebpf --tail=5
 ```
 
 You should see an event like:
