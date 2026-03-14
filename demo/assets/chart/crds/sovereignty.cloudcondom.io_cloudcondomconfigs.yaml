@@ -1,0 +1,155 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: cloudcondomconfigs.sovereignty.cloudcondom.io
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.0
+spec:
+  group: sovereignty.cloudcondom.io
+  names:
+    kind: CloudCondomConfig
+    listKind: CloudCondomConfigList
+    plural: cloudcondomconfigs
+    singular: cloudcondomconfig
+    shortNames:
+      - ccc
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Vault
+          type: string
+          jsonPath: .spec.vaultAddress
+        - name: Ready
+          type: boolean
+          jsonPath: .status.ready
+        - name: Injected
+          type: integer
+          jsonPath: .status.injectedPods
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          description: CloudCondomConfig configures secret injection for annotated workloads.
+          type: object
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: CloudCondomConfigSpec defines the desired configuration.
+              type: object
+              required:
+                - vaultAddress
+                - vaultRole
+                - secretPaths
+              properties:
+                vaultAddress:
+                  description: Address of the EU-hosted OpenBao/Vault instance.
+                  type: string
+                vaultAuthPath:
+                  description: Kubernetes auth method path in Vault.
+                  type: string
+                  default: "auth/kubernetes"
+                vaultRole:
+                  description: Vault role for Kubernetes auth.
+                  type: string
+                secretPaths:
+                  description: Vault secret paths to fetch.
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                envMap:
+                  description: >-
+                    Vault field to environment variable mappings.
+                    Format: "password=PGPASSWORD,username=PGUSER;api_key=API_KEY".
+                    Semicolons separate different secret paths matching secretPaths order.
+                  type: string
+                wrapperImage:
+                  description: cloudcondom-wrapper sidecar image.
+                  type: string
+                  default: "europe-west4-docker.pkg.dev/skipopsmain/cloudcondom/cloudcondom-wrapper:latest"
+                wrapperResources:
+                  description: Resource requirements for the sidecar.
+                  type: object
+                  properties:
+                    limits:
+                      type: object
+                      additionalProperties:
+                        anyOf:
+                          - type: integer
+                          - type: string
+                        x-kubernetes-int-or-string: true
+                    requests:
+                      type: object
+                      additionalProperties:
+                        anyOf:
+                          - type: integer
+                          - type: string
+                        x-kubernetes-int-or-string: true
+                namespaceSelector:
+                  description: Restricts which namespaces this config applies to.
+                  type: object
+                  properties:
+                    matchLabels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    matchExpressions:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          key:
+                            type: string
+                          operator:
+                            type: string
+                          values:
+                            type: array
+                            items:
+                              type: string
+            status:
+              description: CloudCondomConfigStatus defines the observed state.
+              type: object
+              properties:
+                ready:
+                  type: boolean
+                message:
+                  type: string
+                injectedPods:
+                  type: integer
+                  format: int32
+                lastValidated:
+                  type: string
+                  format: date-time
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                      - type
+                      - status
+                      - lastTransitionTime
+                      - reason
+                      - message

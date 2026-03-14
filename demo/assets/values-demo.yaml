@@ -1,0 +1,43 @@
+namespace: cloudcondom-system
+
+imagePullSecrets: []
+
+operator:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/skipopsltd/cloudcondom-operator
+    tag: "demo"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  webhook:
+    port: 9443
+    failurePolicy: Fail
+    timeoutSeconds: 10
+
+wrapper:
+  image:
+    repository: ghcr.io/skipopsltd/cloudcondom-wrapper
+    tag: "demo"
+
+ebpf:
+  enabled: true
+  image:
+    repository: ghcr.io/skipopsltd/cloudcondom-ebpf
+    tag: "demo"
+    pullPolicy: IfNotPresent
+  enforceMode: true
+  logAll: false
+  reactiveKill: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

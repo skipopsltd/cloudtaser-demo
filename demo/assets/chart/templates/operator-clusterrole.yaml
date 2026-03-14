@@ -1,0 +1,32 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudcondom-operator
+  labels:
+    app.kubernetes.io/name: cloudcondom-operator
+    {{- include "cloudcondom.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["sovereignty.cloudcondom.io"]
+    resources: ["cloudcondomconfigs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["sovereignty.cloudcondom.io"]
+    resources: ["cloudcondomconfigs/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["sovereignty.cloudcondom.io"]
+    resources: ["cloudcondomconfigs/finalizers"]
+    verbs: ["update"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources: ["mutatingwebhookconfigurations"]
+    verbs: ["get", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch"]

@@ -1,0 +1,18 @@
+apiVersion: v2
+name: cloudcondom
+description: CloudCondom — runtime secret protection for Kubernetes workloads
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - cloudcondom
+  - secrets
+  - vault
+  - webhook
+  - ebpf
+  - sovereignty
+home: https://cloudcondom.io
+sources:
+  - https://github.com/skipopsltd/cloudcondom-operator
+  - https://github.com/skipopsltd/cloudcondom-wrapper
+  - https://github.com/skipopsltd/cloudcondom-ebpf

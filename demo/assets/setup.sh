@@ -40,13 +40,11 @@ POLICY
 # Create service account for the demo pod
 kubectl create serviceaccount postgres-demo -n default
 
-# Install CloudCondom via Helm
-# NOTE: Replace with actual public registry path for demo images
-helm install cloudcondom oci://ghcr.io/skipopsltd/cloudcondom-demo/cloudcondom \
+# Install CloudCondom from bundled chart with demo values
+# Images are pulled from ghcr.io/skipopsltd (public packages)
+helm install cloudcondom /tmp/chart \
   --namespace cloudcondom-system --create-namespace \
-  --set ebpf.enabled=true \
-  --set ebpf.enforceMode=true \
-  --set ebpf.reactiveKill=true \
+  -f /tmp/values-demo.yaml \
   --wait --timeout=180s
 
 echo "CloudCondom demo environment ready!"
