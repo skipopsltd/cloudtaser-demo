@@ -33,37 +33,26 @@ curl -sf -X POST "$EU_VAULT/v1/secret/data/demo/postgres" \
   -H "Content-Type: application/json" \
   -d '{"data": {"password": "CloudTaser-Demo-2026!", "username": "postgres"}}'
 
-# Save token for the unseal step
-echo "$SESSION_TOKEN" > /tmp/.demo-token
-
 # Install CloudTaser from public GHCR chart
 helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \
-  --version 0.1.16 \
+  --version 0.1.17 \
   --namespace cloudtaser-system --create-namespace \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s
 
-# Create pod manifest with EU Vault token auth (sealed mode)
-cat > /tmp/postgres-demo.yaml <<'MANIFEST'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: postgres-demo
-  namespace: default
-  annotations:
-    cloudtaser.io/inject: "true"
-    cloudtaser.io/ebpf: "true"
-    cloudtaser.io/vault-address: "https://secret.cloudtaser.io"
-    cloudtaser.io/vault-auth-method: "token"
-    cloudtaser.io/secret-paths: "secret/data/demo/postgres"
-    cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
-spec:
-  containers:
-    - name: postgres
-      image: postgres:16
-      ports:
-        - containerPort: 5432
-MANIFEST
+# Unseal the operator with the EU Vault session token
+echo "Unsealing CloudTaser operator..."
+OPERATOR_POD=$(kubectl -n cloudtaser-system get pod -l control-plane=controller-manager -o jsonpath='{.items[0].metadata.name}')
+kubectl -n cloudtaser-system port-forward "pod/${OPERATOR_POD}" 8199:8199 &>/dev/null &
+PF_PID=$!
+sleep 2
+
+curl -sf -X POST http://localhost:8199/v1/unseal \
+  -H "Content-Type: application/json" \
+  -d "{\"token\":\"${SESSION_TOKEN}\"}"
+
+kill $PF_PID 2>/dev/null || true
+echo "Operator unsealed — it will auto-unseal wrapper pods"
 
 touch /tmp/.cloudtaser-setup-done
 echo "CloudTaser demo environment ready!"
