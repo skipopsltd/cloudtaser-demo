@@ -4,8 +4,11 @@
 
 set -euo pipefail
 
+EU_VAULT="https://secret.cloudtaser.io"
+PROVISIONER_TOKEN="demo-provisioner-v1"
+
 echo "Installing tools..."
-apt-get update -qq && apt-get install -y -qq awscli xxd > /dev/null 2>&1
+apt-get update -qq && apt-get install -y -qq awscli xxd jq > /dev/null 2>&1
 
 # Configure AWS CLI for path-style addressing (MinIO compatible)
 mkdir -p /root/.aws
@@ -15,31 +18,21 @@ s3 =
   addressing_style = path
 AWSCFG
 
-# Pull images in parallel
-docker pull hashicorp/vault:1.15 > /dev/null 2>&1 &
+# Pull S3 proxy image
 docker pull ghcr.io/skipopsltd/cloudtaser-s3-proxy:v0.2.2-amd64 > /dev/null 2>&1 &
-wait
 
-# Start Vault in dev mode (simulates EU-hosted key management)
-docker run -d --name eu-vault --network host \
-  -e 'VAULT_DEV_ROOT_TOKEN_ID=demo-root-token' \
-  -e 'VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200' \
-  hashicorp/vault:1.15
+# Get a scoped session token from the EU Vault (Frankfurt)
+echo "Requesting session token from EU Vault..."
+SESSION_TOKEN=$(curl -sf -X POST "$EU_VAULT/v1/auth/token/create/demo" \
+  -H "X-Vault-Token: $PROVISIONER_TOKEN" \
+  -d '{}' | jq -r '.auth.client_token')
 
-# Wait for Vault
-for i in $(seq 1 30); do
-  if docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=demo-root-token eu-vault vault status > /dev/null 2>&1; then
-    break
-  fi
-  sleep 1
-done
+if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
+  echo "ERROR: Failed to get session token from EU Vault"
+  exit 1
+fi
 
-# Enable Transit secrets engine and create encryption key
-docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=demo-root-token eu-vault \
-  vault secrets enable transit
-
-docker exec -e VAULT_ADDR=http://127.0.0.1:8200 -e VAULT_TOKEN=demo-root-token eu-vault \
-  vault write -f transit/keys/cloudtaser
+echo "Session token acquired (1h TTL, scoped to demo paths)"
 
 # Create a unique bucket on play.min.io
 BUCKET="cloudtaser-demo-$(date +%s)"
@@ -50,6 +43,7 @@ export AWS_ACCESS_KEY_ID=Q3AM3UQ867SPQQA43P2F
 export AWS_SECRET_ACCESS_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
 export AWS_DEFAULT_REGION=us-east-1
 export BUCKET=${BUCKET}
+export EU_VAULT=${EU_VAULT}
 DEMOENV
 
 echo 'source /tmp/.demo-env 2>/dev/null' >> /root/.bashrc
@@ -58,12 +52,15 @@ source /tmp/.demo-env
 # Create bucket on play.min.io
 aws --endpoint-url https://play.min.io s3 mb s3://$BUCKET
 
-# Start CloudTaser S3 Proxy
+# Wait for image pull
+wait
+
+# Start CloudTaser S3 Proxy — connected to EU Vault in Frankfurt
 docker run -d --name cloudtaser-s3proxy --network host \
   -e CLOUDTASER_S3PROXY_S3_ENDPOINT=https://play.min.io \
   -e CLOUDTASER_S3PROXY_S3_REGION=us-east-1 \
-  -e VAULT_ADDR=http://127.0.0.1:8200 \
-  -e VAULT_TOKEN=demo-root-token \
+  -e VAULT_ADDR=$EU_VAULT \
+  -e VAULT_TOKEN=$SESSION_TOKEN \
   -e VAULT_AUTH_METHOD=token \
   -e CLOUDTASER_S3PROXY_TRANSIT_KEY=cloudtaser \
   -e AWS_ACCESS_KEY_ID=Q3AM3UQ867SPQQA43P2F \

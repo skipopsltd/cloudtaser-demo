@@ -45,4 +45,4 @@ Different DEK for every object — compromise of one key cannot decrypt other ob
 
 **Why this matters for EU data sovereignty:**
 
-The cloud provider holds the ciphertext and the wrapped DEKs. But the wrapped DEKs can **only be unwrapped by the Vault Transit engine** — hosted in the EU, under EU jurisdiction. Even with a US government subpoena (CLOUD Act, FISA Section 702), the cloud provider can only hand over ciphertext and wrapped keys — both useless without EU Vault access.
+The cloud provider holds the ciphertext and the wrapped DEKs. But the wrapped DEKs can **only be unwrapped by the Vault Transit engine** at `secret.cloudtaser.io` — hosted in Frankfurt (GCP europe-west3), under EU jurisdiction. Even with a US government subpoena (CLOUD Act, FISA Section 702), the cloud provider can only hand over ciphertext and wrapped keys — both useless without access to the EU-hosted Transit engine.

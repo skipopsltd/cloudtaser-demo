@@ -15,16 +15,18 @@ CloudTaser's S3 proxy runs as a sidecar in your Kubernetes pods. Applications po
 
 - Generates a unique **AES-256-GCM** data encryption key per object
 - Encrypts the object locally before upload
-- Wraps the encryption key via an **EU-hosted Vault Transit engine**
+- Wraps the encryption key via an **EU-hosted Vault Transit engine** (Frankfurt, Germany)
 - Forwards only ciphertext to the cloud provider
 
 The cloud provider never holds the encryption keys. Even with a US government subpoena (CLOUD Act, FISA 702), the provider can only hand over ciphertext.
 
 ## Environment
 
-This environment is being set up with:
-- HashiCorp Vault with Transit engine (simulating EU-hosted key management)
-- CloudTaser S3 Proxy (client-side encryption)
-- MinIO play server (simulating US cloud object storage)
+This demo connects to:
+- **EU Vault** at `secret.cloudtaser.io` — Transit encryption engine hosted in Frankfurt (europe-west3)
+- **CloudTaser S3 Proxy** — client-side encryption, running locally
+- **MinIO play server** — simulating US cloud object storage
+
+A scoped session token (1h TTL) is automatically provisioned for this demo session.
 
 Setup takes about 1 minute.
