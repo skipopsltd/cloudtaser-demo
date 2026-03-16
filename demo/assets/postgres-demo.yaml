@@ -5,6 +5,7 @@ metadata:
   namespace: default
   annotations:
     cloudtaser.io/inject: "true"
+    cloudtaser.io/ebpf: "true"
     cloudtaser.io/vault-address: "http://vault.vault.svc:8200"
     cloudtaser.io/vault-role: "postgres-demo"
     cloudtaser.io/secret-paths: "secret/data/demo/postgres"
