@@ -53,5 +53,27 @@ helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s
 
+# Create pod manifest (also shipped as asset, but create here as fallback)
+cat > /tmp/postgres-demo.yaml <<'MANIFEST'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres-demo
+  namespace: default
+  annotations:
+    cloudtaser.io/inject: "true"
+    cloudtaser.io/vault-address: "http://vault.vault.svc:8200"
+    cloudtaser.io/vault-role: "postgres-demo"
+    cloudtaser.io/secret-paths: "secret/data/demo/postgres"
+    cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
+spec:
+  serviceAccountName: postgres-demo
+  containers:
+    - name: postgres
+      image: postgres:16
+      ports:
+        - containerPort: 5432
+MANIFEST
+
 touch /tmp/.cloudtaser-setup-done
 echo "CloudTaser demo environment ready!"
