@@ -38,7 +38,7 @@ echo "$SESSION_TOKEN" > /tmp/.demo-token
 
 # Install CloudTaser from public GHCR chart
 helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \
-  --version 0.1.15 \
+  --version 0.1.16 \
   --namespace cloudtaser-system --create-namespace \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s
