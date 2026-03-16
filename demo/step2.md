@@ -24,16 +24,9 @@ kubectl exec -n kube-system etcd-controlplane -- etcdctl \
 **Check environment variables in the pod spec:**
 
 ```bash
-kubectl get pod postgres-demo -o json | python3 -c "
-import sys, json
-pod = json.load(sys.stdin)
-for c in pod['spec']['containers']:
-    for e in c.get('env', []):
-        if 'PASSWORD' in e.get('name', '').upper() or 'SECRET' in e.get('name', '').upper():
-            print(f'FOUND: {e[\"name\"]}')
-            sys.exit(1)
-print('No secrets in pod spec - CloudTaser is working')
-"
+kubectl get pod postgres-demo -o jsonpath='{.spec.containers[0].env[*].name}'
 ```
+
+You'll see CloudTaser metadata vars (`CLOUDTASER_*`) but no `POSTGRES_PASSWORD` — the actual secret is only in process memory, never in the pod spec.
 
 The secrets exist only in the wrapper's process memory, fetched directly from the EU vault.
