@@ -53,4 +53,5 @@ helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s
 
+touch /tmp/.cloudtaser-setup-done
 echo "CloudTaser demo environment ready!"
