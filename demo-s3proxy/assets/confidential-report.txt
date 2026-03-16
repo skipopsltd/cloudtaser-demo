@@ -1,0 +1,23 @@
+CONFIDENTIAL — Internal Use Only
+==================================
+Q1 2026 Financial Summary — Acme GmbH
+
+Revenue:         EUR 12,847,000
+Operating Costs: EUR  9,628,000
+EBITDA:          EUR  3,219,000
+Net Profit:      EUR  2,156,000
+
+Key Customer Accounts:
+  Deutsche Bank AG     — Contract: EUR 2.1M/yr (renewal: June 2026)
+  Allianz SE           — Contract: EUR 1.8M/yr (renewal: Sept 2026)
+  Siemens Energy AG    — Contract: EUR 950K/yr (renewal: Dec 2026)
+  BMW Group            — Contract: EUR 740K/yr (new, signed Jan 2026)
+
+Employee Data:
+  Total Headcount:  234
+  Engineering:      89
+  Average Salary:   EUR 78,400/yr
+
+This document contains personal data subject to GDPR Article 6.
+Unauthorized disclosure may result in regulatory penalties up to
+EUR 20M or 4% of annual global turnover, whichever is higher.
