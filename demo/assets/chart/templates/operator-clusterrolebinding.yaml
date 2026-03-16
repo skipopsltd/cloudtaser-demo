@@ -1,15 +1,15 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: cloudcondom-operator
+  name: cloudtaser-operator
   labels:
-    app.kubernetes.io/name: cloudcondom-operator
-    {{- include "cloudcondom.labels" . | nindent 4 }}
+    app.kubernetes.io/name: cloudtaser-operator
+    {{- include "cloudtaser.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cloudcondom-operator
+  name: cloudtaser-operator
 subjects:
   - kind: ServiceAccount
-    name: cloudcondom-operator
-    namespace: {{ include "cloudcondom.namespace" . }}
+    name: cloudtaser-operator
+    namespace: {{ include "cloudtaser.namespace" . }}

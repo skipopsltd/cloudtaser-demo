@@ -1,6 +1,6 @@
 {
-  "title": "CloudCondom: EU Data Sovereignty on US Cloud",
-  "description": "See how CloudCondom keeps your secrets out of Kubernetes etcd and blocks /proc/environ reads — all while running on US cloud infrastructure.",
+  "title": "CloudTaser: EU Data Sovereignty on US Cloud",
+  "description": "See how CloudTaser keeps your secrets out of Kubernetes etcd and blocks /proc/environ reads — all while running on US cloud infrastructure.",
   "details": {
     "intro": {
       "text": "intro.md"

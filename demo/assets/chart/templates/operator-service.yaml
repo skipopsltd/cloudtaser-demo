@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cloudcondom-operator-webhook
-  namespace: {{ include "cloudcondom.namespace" . }}
+  name: cloudtaser-operator-webhook
+  namespace: {{ include "cloudtaser.namespace" . }}
   labels:
-    app.kubernetes.io/name: cloudcondom-operator
-    {{- include "cloudcondom.labels" . | nindent 4 }}
+    app.kubernetes.io/name: cloudtaser-operator
+    {{- include "cloudtaser.labels" . | nindent 4 }}
 spec:
   ports:
     - port: 443

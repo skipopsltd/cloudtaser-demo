@@ -1,18 +1,18 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: cloudcondomconfigs.sovereignty.cloudcondom.io
+  name: cloudtaserconfigs.api.cloudtaser.io
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.0
 spec:
-  group: sovereignty.cloudcondom.io
+  group: api.cloudtaser.io
   names:
-    kind: CloudCondomConfig
-    listKind: CloudCondomConfigList
-    plural: cloudcondomconfigs
-    singular: cloudcondomconfig
+    kind: CloudTaserConfig
+    listKind: CloudTaserConfigList
+    plural: cloudtaserconfigs
+    singular: cloudtaserconfig
     shortNames:
-      - ccc
+      - ctc
   scope: Namespaced
   versions:
     - name: v1alpha1
@@ -35,7 +35,7 @@ spec:
           jsonPath: .metadata.creationTimestamp
       schema:
         openAPIV3Schema:
-          description: CloudCondomConfig configures secret injection for annotated workloads.
+          description: CloudTaserConfig configures secret injection for annotated workloads.
           type: object
           properties:
             apiVersion:
@@ -45,7 +45,7 @@ spec:
             metadata:
               type: object
             spec:
-              description: CloudCondomConfigSpec defines the desired configuration.
+              description: CloudTaserConfigSpec defines the desired configuration.
               type: object
               required:
                 - vaultAddress
@@ -75,9 +75,9 @@ spec:
                     Semicolons separate different secret paths matching secretPaths order.
                   type: string
                 wrapperImage:
-                  description: cloudcondom-wrapper sidecar image.
+                  description: cloudtaser-wrapper sidecar image.
                   type: string
-                  default: "europe-west4-docker.pkg.dev/skipopsmain/cloudcondom/cloudcondom-wrapper:latest"
+                  default: "europe-west4-docker.pkg.dev/skipopsmain/cloudtaser/cloudtaser-wrapper:latest"
                 wrapperResources:
                   description: Resource requirements for the sidecar.
                   type: object
@@ -118,7 +118,7 @@ spec:
                             items:
                               type: string
             status:
-              description: CloudCondomConfigStatus defines the observed state.
+              description: CloudTaserConfigStatus defines the observed state.
               type: object
               properties:
                 ready:

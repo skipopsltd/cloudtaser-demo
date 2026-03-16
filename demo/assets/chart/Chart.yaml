@@ -1,18 +1,18 @@
 apiVersion: v2
-name: cloudcondom
-description: CloudCondom — runtime secret protection for Kubernetes workloads
+name: cloudtaser
+description: CloudTaser — runtime secret protection for Kubernetes workloads
 type: application
 version: 0.1.0
 appVersion: "0.1.0"
 keywords:
-  - cloudcondom
+  - cloudtaser
   - secrets
   - vault
   - webhook
   - ebpf
-  - sovereignty
-home: https://cloudcondom.io
+  - data-sovereignty
+home: https://cloudtaser.io
 sources:
-  - https://github.com/skipopsltd/cloudcondom-operator
-  - https://github.com/skipopsltd/cloudcondom-wrapper
-  - https://github.com/skipopsltd/cloudcondom-ebpf
+  - https://github.com/skipopsltd/cloudtaser-operator
+  - https://github.com/skipopsltd/cloudtaser-wrapper
+  - https://github.com/skipopsltd/cloudtaser-ebpf

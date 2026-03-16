@@ -1,11 +1,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cloudcondom-operator
-  namespace: {{ include "cloudcondom.namespace" . }}
+  name: cloudtaser-operator
+  namespace: {{ include "cloudtaser.namespace" . }}
   labels:
-    app.kubernetes.io/name: cloudcondom-operator
-    {{- include "cloudcondom.labels" . | nindent 4 }}
+    app.kubernetes.io/name: cloudtaser-operator
+    {{- include "cloudtaser.labels" . | nindent 4 }}
     control-plane: controller-manager
 spec:
   replicas: {{ .Values.operator.replicaCount }}
@@ -16,10 +16,10 @@ spec:
     metadata:
       labels:
         control-plane: controller-manager
-        app.kubernetes.io/name: cloudcondom-operator
-        {{- include "cloudcondom.labels" . | nindent 8 }}
+        app.kubernetes.io/name: cloudtaser-operator
+        {{- include "cloudtaser.labels" . | nindent 8 }}
     spec:
-      serviceAccountName: cloudcondom-operator
+      serviceAccountName: cloudtaser-operator
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -31,15 +31,15 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
         - name: manager
-          image: {{ include "cloudcondom.operator.image" . }}
+          image: {{ include "cloudtaser.operator.image" . }}
           imagePullPolicy: {{ .Values.operator.image.pullPolicy }}
           args:
             - --metrics-bind-address=:8080
             - --health-probe-bind-address=:8081
             - --webhook-port={{ .Values.operator.webhook.port }}
           env:
-            - name: CLOUDCONDOM_INIT_IMAGE
-              value: {{ include "cloudcondom.wrapper.image" . }}
+            - name: CLOUDTASER_INIT_IMAGE
+              value: {{ include "cloudtaser.wrapper.image" . }}
           ports:
             - containerPort: {{ .Values.operator.webhook.port }}
               name: webhook-server

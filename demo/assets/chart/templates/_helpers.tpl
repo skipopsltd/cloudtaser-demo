@@ -1,22 +1,22 @@
-{{- define "cloudcondom.labels" -}}
+{{- define "cloudtaser.labels" -}}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-app.kubernetes.io/part-of: cloudcondom
+app.kubernetes.io/part-of: cloudtaser
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{- end }}
 
-{{- define "cloudcondom.namespace" -}}
-{{ .Values.namespace | default "cloudcondom-system" }}
+{{- define "cloudtaser.namespace" -}}
+{{ .Values.namespace | default "cloudtaser-system" }}
 {{- end }}
 
-{{- define "cloudcondom.operator.image" -}}
+{{- define "cloudtaser.operator.image" -}}
 {{ .Values.operator.image.repository }}:{{ .Values.operator.image.tag }}
 {{- end }}
 
-{{- define "cloudcondom.wrapper.image" -}}
+{{- define "cloudtaser.wrapper.image" -}}
 {{ .Values.wrapper.image.repository }}:{{ .Values.wrapper.image.tag }}
 {{- end }}
 
-{{- define "cloudcondom.ebpf.image" -}}
+{{- define "cloudtaser.ebpf.image" -}}
 {{ .Values.ebpf.image.repository }}:{{ .Values.ebpf.image.tag }}
 {{- end }}

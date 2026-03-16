@@ -2,16 +2,16 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: cloudcondom-ebpf
-  namespace: {{ include "cloudcondom.namespace" . }}
+  name: cloudtaser-ebpf
+  namespace: {{ include "cloudtaser.namespace" . }}
   labels:
-    app.kubernetes.io/name: cloudcondom-ebpf
-    {{- include "cloudcondom.labels" . | nindent 4 }}
+    app.kubernetes.io/name: cloudtaser-ebpf
+    {{- include "cloudtaser.labels" . | nindent 4 }}
     app.kubernetes.io/component: enforcement
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: cloudcondom-ebpf
+      app.kubernetes.io/name: cloudtaser-ebpf
   updateStrategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,14 +19,14 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: cloudcondom-ebpf
-        {{- include "cloudcondom.labels" . | nindent 8 }}
+        app.kubernetes.io/name: cloudtaser-ebpf
+        {{- include "cloudtaser.labels" . | nindent 8 }}
         app.kubernetes.io/component: enforcement
     spec:
       hostPID: true
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      serviceAccountName: cloudcondom-ebpf
+      serviceAccountName: cloudtaser-ebpf
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -36,7 +36,7 @@ spec:
       priorityClassName: system-node-critical
       containers:
         - name: ebpf-agent
-          image: {{ include "cloudcondom.ebpf.image" . }}
+          image: {{ include "cloudtaser.ebpf.image" . }}
           imagePullPolicy: {{ .Values.ebpf.image.pullPolicy }}
           securityContext:
             privileged: true
@@ -52,7 +52,7 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
             - name: EBPF_OBJECT_PATH
-              value: /opt/cloudcondom/secret_monitor.o
+              value: /opt/cloudtaser/secret_monitor.o
             - name: GRPC_LISTEN_ADDR
               value: "0.0.0.0:9443"
             - name: HEALTH_LISTEN_ADDR

@@ -1,6 +1,6 @@
 # Verify Secrets Are Not in Kubernetes
 
-The whole point of CloudCondom is that secrets never touch Kubernetes storage. Let's verify.
+The whole point of CloudTaser is that secrets never touch Kubernetes storage. Let's verify.
 
 **Check for any Kubernetes Secrets in the namespace:**
 
@@ -32,7 +32,7 @@ for c in pod['spec']['containers']:
         if 'PASSWORD' in e.get('name', '').upper() or 'SECRET' in e.get('name', '').upper():
             print(f'FOUND: {e[\"name\"]}')
             sys.exit(1)
-print('No secrets in pod spec - CloudCondom is working')
+print('No secrets in pod spec - CloudTaser is working')
 "
 ```
 

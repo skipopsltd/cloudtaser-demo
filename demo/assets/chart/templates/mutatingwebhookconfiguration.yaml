@@ -1,12 +1,12 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: cloudcondom-operator-webhook
+  name: cloudtaser-operator-webhook
   labels:
-    app.kubernetes.io/name: cloudcondom-operator
-    {{- include "cloudcondom.labels" . | nindent 4 }}
+    app.kubernetes.io/name: cloudtaser-operator
+    {{- include "cloudtaser.labels" . | nindent 4 }}
 webhooks:
-  - name: inject.cloudcondom.io
+  - name: inject.cloudtaser.io
     admissionReviewVersions: ["v1"]
     sideEffects: None
     timeoutSeconds: {{ .Values.operator.webhook.timeoutSeconds }}
@@ -14,8 +14,8 @@ webhooks:
     reinvocationPolicy: IfNeeded
     clientConfig:
       service:
-        name: cloudcondom-operator-webhook
-        namespace: {{ include "cloudcondom.namespace" . }}
+        name: cloudtaser-operator-webhook
+        namespace: {{ include "cloudtaser.namespace" . }}
         path: /mutate-v1-pod
         port: 443
     rules:
@@ -29,5 +29,5 @@ webhooks:
         - key: kubernetes.io/metadata.name
           operator: NotIn
           values:
-            - {{ include "cloudcondom.namespace" . }}
+            - {{ include "cloudtaser.namespace" . }}
             - kube-system

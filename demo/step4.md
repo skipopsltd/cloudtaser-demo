@@ -1,6 +1,6 @@
 # Try to Read /proc/pid/environ
 
-This is the key security moment. On a normal Kubernetes node, anyone with host access can read a process's environment variables via `/proc/<pid>/environ`. CloudCondom's eBPF agent blocks this.
+This is the key security moment. On a normal Kubernetes node, anyone with host access can read a process's environment variables via `/proc/<pid>/environ`. CloudTaser's eBPF agent blocks this.
 
 **Find the PostgreSQL PID:**
 
@@ -15,7 +15,7 @@ echo "PostgreSQL PID: $PG_PID"
 # Get the node-level PID for the container process
 NODE_PID=$(kubectl exec postgres-demo -- cat /proc/1/status | grep ^NSpid | awk '{print $NF}')
 echo "Attempting to read /proc/${NODE_PID}/environ..."
-cat /proc/${NODE_PID}/environ 2>&1 || echo "ACCESS BLOCKED by CloudCondom eBPF agent"
+cat /proc/${NODE_PID}/environ 2>&1 || echo "ACCESS BLOCKED by CloudTaser eBPF agent"
 ```
 
 The read was either:

@@ -1,11 +1,11 @@
-namespace: cloudcondom-system
+namespace: cloudtaser-system
 
 imagePullSecrets: []
 
 operator:
   replicaCount: 1
   image:
-    repository: ghcr.io/skipopsltd/cloudcondom-operator
+    repository: ghcr.io/skipopsltd/cloudtaser-operator
     tag: "demo"
     pullPolicy: IfNotPresent
   resources:
@@ -22,13 +22,13 @@ operator:
 
 wrapper:
   image:
-    repository: ghcr.io/skipopsltd/cloudcondom-wrapper
+    repository: ghcr.io/skipopsltd/cloudtaser-wrapper
     tag: "demo"
 
 ebpf:
   enabled: true
   image:
-    repository: ghcr.io/skipopsltd/cloudcondom-ebpf
+    repository: ghcr.io/skipopsltd/cloudtaser-ebpf
     tag: "demo"
     pullPolicy: IfNotPresent
   enforceMode: true
