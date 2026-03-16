@@ -6,7 +6,7 @@ operator:
   replicaCount: 1
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-operator
-    tag: "v0.4.10-amd64"
+    tag: "v0.4.11-amd64"
     pullPolicy: Always
   resources:
     requests:
@@ -23,7 +23,7 @@ operator:
 wrapper:
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-wrapper
-    tag: "v0.0.10-amd64"
+    tag: "v0.0.11-amd64"
 
 s3proxy:
   image:
