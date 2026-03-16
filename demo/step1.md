@@ -1,9 +1,9 @@
 # Deploy a Protected PostgreSQL Pod
 
-First, make sure the background setup has finished:
+First, wait for the background setup to finish (operator + vault):
 
 ```bash
-while [ ! -f /tmp/.cloudtaser-setup-done ]; do echo "Waiting for setup to complete..."; sleep 5; done && echo "Setup complete!"
+kubectl wait -n cloudtaser-system --for=condition=Ready pod -l app.kubernetes.io/name=cloudtaser-operator --timeout=300s
 ```
 
 Take a look at the pod manifest — note the CloudTaser annotations:
