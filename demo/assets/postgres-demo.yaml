@@ -10,6 +10,7 @@ metadata:
     cloudtaser.io/vault-auth-method: "token"
     cloudtaser.io/secret-paths: "secret/data/demo/postgres"
     cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
+    cloudtaser.io/vault-tls-skip-verify: "true"
 spec:
   containers:
     - name: postgres
