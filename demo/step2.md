@@ -29,4 +29,4 @@ kubectl get pod postgres-demo -o jsonpath='{.spec.containers[0].env[*].name}'
 
 You'll see CloudTaser metadata vars (`CLOUDTASER_*`) but no `POSTGRES_PASSWORD` — the actual secret is only in process memory, never in the pod spec.
 
-The secrets exist only in the wrapper's process memory, fetched directly from the EU vault.
+The secrets exist only in the wrapper's process memory, fetched directly from the EU Vault in Frankfurt (`secret.cloudtaser.io`).

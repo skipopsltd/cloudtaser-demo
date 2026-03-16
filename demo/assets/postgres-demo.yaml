@@ -6,12 +6,11 @@ metadata:
   annotations:
     cloudtaser.io/inject: "true"
     cloudtaser.io/ebpf: "true"
-    cloudtaser.io/vault-address: "http://vault.vault.svc:8200"
-    cloudtaser.io/vault-role: "postgres-demo"
+    cloudtaser.io/vault-address: "https://secret.cloudtaser.io"
+    cloudtaser.io/vault-auth-method: "token"
     cloudtaser.io/secret-paths: "secret/data/demo/postgres"
     cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
 spec:
-  serviceAccountName: postgres-demo
   containers:
     - name: postgres
       image: postgres:16
