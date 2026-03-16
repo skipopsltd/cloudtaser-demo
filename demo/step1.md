@@ -1,5 +1,11 @@
 # Deploy a Protected PostgreSQL Pod
 
+First, make sure the background setup has finished:
+
+```bash
+while [ ! -f /tmp/.cloudtaser-setup-done ]; do echo "Waiting for setup to complete..."; sleep 5; done && echo "Setup complete!"
+```
+
 Create a PostgreSQL deployment with CloudTaser annotations. These annotations tell the operator to inject the secret-fetching wrapper.
 
 ```bash
