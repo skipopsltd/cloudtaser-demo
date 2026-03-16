@@ -18,7 +18,6 @@
     },
     "assets": {
       "host01": [
-        {"file": "setup.sh", "target": "/tmp/", "chmod": "+x"},
         {"file": "values-demo.yaml", "target": "/tmp/"}
       ]
     }
