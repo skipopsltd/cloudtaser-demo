@@ -20,6 +20,6 @@ You've seen CloudTaser in action:
 
 Ready to protect your infrastructure?
 
-**Schedule a demo with your team:** [cloudtaser.io](https://cloudtaser.io)
+**Learn more:** [cloudtaser.io](https://cloudtaser.io)
 
 **Contact us:** hello@enableops.io

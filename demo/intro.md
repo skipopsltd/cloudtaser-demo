@@ -1,4 +1,4 @@
-# CloudTaser / Phantom — Live Demo
+# CloudTaser — Live Demo
 
 CloudTaser enables EU companies to use US cloud providers (AWS, GCP, Azure) with cryptographic guarantees that neither the provider nor US government can access your data.
 
@@ -16,13 +16,16 @@ In this 10-minute demo, you'll:
 
 CloudTaser's mutating webhook intercepts pod creation and injects a thin wrapper that:
 - Fetches secrets directly from an EU-hosted vault into process memory
-- Rewrites the container entrypoint so the wrapper runs as PID 1
+- Rewrites the container entrypoint so the wrapper runs first
 - Secrets exist only in memory — never in etcd, K8s Secrets, or on disk
 
-An eBPF daemonset on every node monitors for secret leaks and blocks unauthorized access.
+An eBPF daemonset on every node monitors for secret leaks and blocks unauthorized access to `/proc/pid/environ`.
 
 ## Environment
 
-This environment has a Kubernetes cluster with:
+This environment is being set up in the background with:
+- A Kubernetes cluster
 - Vault (dev mode) pre-configured with a PostgreSQL password
 - CloudTaser operator, wrapper, and eBPF agent pre-installed via Helm
+
+Setup takes about 2 minutes. You can proceed to Step 1 once you see the terminal prompt.

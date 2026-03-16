@@ -10,7 +10,7 @@ import sys, json
 for line in sys.stdin:
     try:
         evt = json.loads(line.strip())
-        if evt.get('msg') in ['ENVIRON READ BLOCKED', 'SECRET LEAK DETECTED', 'reactive kill: terminating process']:
+        if 'ENVIRON' in evt.get('msg', '') or 'SECRET' in evt.get('msg', ''):
             print(json.dumps(evt, indent=2))
     except:
         pass

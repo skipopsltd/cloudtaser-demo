@@ -1,8 +1,11 @@
 #!/bin/bash
 # CloudTaser Demo — Pre-setup script
-# This runs before the user sees the environment
+# Runs automatically in background during intro
 
 set -euo pipefail
+
+echo "Waiting for Kubernetes to be ready..."
+kubectl wait --for=condition=Ready node --all --timeout=300s
 
 echo "Setting up CloudTaser demo environment..."
 
@@ -14,6 +17,9 @@ helm install vault hashicorp/vault \
   --set "server.dev.enabled=true" \
   --set "server.dev.devRootToken=demo-root-token" \
   --wait --timeout=120s
+
+# Wait for vault pod to be fully ready
+kubectl -n vault wait --for=condition=Ready pod/vault-0 --timeout=120s
 
 # Configure Vault with demo secrets
 kubectl exec -n vault vault-0 -- vault kv put secret/demo/postgres \
@@ -40,9 +46,9 @@ POLICY
 # Create service account for the demo pod
 kubectl create serviceaccount postgres-demo -n default
 
-# Install CloudTaser from bundled chart with demo values
-# Images are pulled from ghcr.io/skipopsltd (public packages)
-helm install cloudtaser /tmp/chart \
+# Install CloudTaser from public GHCR chart with demo values
+helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \
+  --version 0.1.7 \
   --namespace cloudtaser-system --create-namespace \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s

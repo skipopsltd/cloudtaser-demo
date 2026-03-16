@@ -3,7 +3,8 @@
   "description": "See how CloudTaser keeps your secrets out of Kubernetes etcd and blocks /proc/environ reads — all while running on US cloud infrastructure.",
   "details": {
     "intro": {
-      "text": "intro.md"
+      "text": "intro.md",
+      "background": "setup.sh"
     },
     "steps": [
       {"text": "step1.md", "title": "Deploy a protected PostgreSQL pod"},
@@ -18,8 +19,7 @@
     "assets": {
       "host01": [
         {"file": "setup.sh", "target": "/tmp/", "chmod": "+x"},
-        {"file": "values-demo.yaml", "target": "/tmp/"},
-        {"file": "chart/", "target": "/tmp/"}
+        {"file": "values-demo.yaml", "target": "/tmp/"}
       ]
     }
   },
