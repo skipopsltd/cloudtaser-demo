@@ -20,7 +20,7 @@ metadata:
     cloudtaser.io/vault-address: "http://vault.vault.svc:8200"
     cloudtaser.io/vault-role: "postgres-demo"
     cloudtaser.io/secret-paths: "secret/data/demo/postgres"
-    cloudtaser.io/env-map: "password=PGPASSWORD,username=POSTGRES_USER"
+    cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
 spec:
   serviceAccountName: postgres-demo
   containers:
@@ -37,7 +37,7 @@ Wait for the pod to be running:
 kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s
 ```
 
-Notice that you didn't specify `PGPASSWORD` anywhere in the pod spec. No Kubernetes Secret was created. The CloudTaser webhook injected the wrapper, which will fetch the password directly from the EU vault at startup.
+Notice that you didn't specify `POSTGRES_PASSWORD` anywhere in the pod spec. No Kubernetes Secret was created. The CloudTaser webhook injected the wrapper, which will fetch the password directly from the EU vault at startup.
 
 ```bash
 kubectl get pod postgres-demo -o jsonpath='{.spec.containers[0].command}' | python3 -m json.tool
