@@ -8,7 +8,7 @@ The whole point of CloudTaser is that secrets never touch Kubernetes storage. Le
 kubectl get secrets -n default
 ```
 
-You should see only the default service account token — no `PGPASSWORD`, no database credentials.
+You should see only the default service account token — no `POSTGRES_PASSWORD`, no database credentials.
 
 **Search etcd directly (if accessible):**
 
@@ -18,7 +18,7 @@ kubectl exec -n kube-system etcd-controlplane -- etcdctl \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
   --cert=/etc/kubernetes/pki/etcd/server.crt \
   --key=/etc/kubernetes/pki/etcd/server.key \
-  get "" --prefix --keys-only | grep -i pgpassword || echo "Not found in etcd - secrets are safe"
+  get "" --prefix --keys-only | grep -i postgres_password || echo "Not found in etcd - secrets are safe"
 ```
 
 **Check environment variables in the pod spec:**
