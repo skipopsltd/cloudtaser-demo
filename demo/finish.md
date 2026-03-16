@@ -22,4 +22,4 @@ Ready to protect your infrastructure?
 
 **Learn more:** [cloudtaser.io](https://cloudtaser.io)
 
-**Contact us:** hello@enableops.io
+**Contact us:** cloud@skipops.ltd
