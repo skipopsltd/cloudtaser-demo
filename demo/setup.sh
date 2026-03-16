@@ -48,7 +48,7 @@ kubectl create serviceaccount postgres-demo -n default
 
 # Install CloudTaser from public GHCR chart with demo values
 helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \
-  --version 0.1.10 \
+  --version 0.1.11 \
   --namespace cloudtaser-system --create-namespace \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s
@@ -62,6 +62,7 @@ metadata:
   namespace: default
   annotations:
     cloudtaser.io/inject: "true"
+    cloudtaser.io/ebpf: "true"
     cloudtaser.io/vault-address: "http://vault.vault.svc:8200"
     cloudtaser.io/vault-role: "postgres-demo"
     cloudtaser.io/secret-paths: "secret/data/demo/postgres"
