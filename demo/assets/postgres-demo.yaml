@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: postgres-demo
+  namespace: default
+  annotations:
+    cloudtaser.io/inject: "true"
+    cloudtaser.io/vault-address: "http://vault.vault.svc:8200"
+    cloudtaser.io/vault-role: "postgres-demo"
+    cloudtaser.io/secret-paths: "secret/data/demo/postgres"
+    cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
+spec:
+  serviceAccountName: postgres-demo
+  containers:
+    - name: postgres
+      image: postgres:16
+      ports:
+        - containerPort: 5432
