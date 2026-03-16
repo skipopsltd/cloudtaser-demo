@@ -6,29 +6,16 @@ First, make sure the background setup has finished:
 while [ ! -f /tmp/.cloudtaser-setup-done ]; do echo "Waiting for setup to complete..."; sleep 5; done && echo "Setup complete!"
 ```
 
-Create a PostgreSQL deployment with CloudTaser annotations. These annotations tell the operator to inject the secret-fetching wrapper.
+Take a look at the pod manifest — note the CloudTaser annotations:
 
 ```bash
-cat <<'EOF' | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: postgres-demo
-  namespace: default
-  annotations:
-    cloudtaser.io/inject: "true"
-    cloudtaser.io/vault-address: "http://vault.vault.svc:8200"
-    cloudtaser.io/vault-role: "postgres-demo"
-    cloudtaser.io/secret-paths: "secret/data/demo/postgres"
-    cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
-spec:
-  serviceAccountName: postgres-demo
-  containers:
-    - name: postgres
-      image: postgres:16
-      ports:
-        - containerPort: 5432
-EOF
+cat /tmp/postgres-demo.yaml
+```
+
+Deploy it:
+
+```bash
+kubectl apply -f /tmp/postgres-demo.yaml
 ```
 
 Wait for the pod to be running:

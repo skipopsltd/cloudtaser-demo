@@ -18,7 +18,8 @@
     },
     "assets": {
       "host01": [
-        {"file": "values-demo.yaml", "target": "/tmp/"}
+        {"file": "values-demo.yaml", "target": "/tmp/"},
+        {"file": "postgres-demo.yaml", "target": "/tmp/"}
       ]
     }
   },
