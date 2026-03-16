@@ -14,8 +14,5 @@ spec:
   containers:
     - name: postgres
       image: postgres:16
-      env:
-        - name: VAULT_SKIP_VERIFY
-          value: "true"
       ports:
         - containerPort: 5432
