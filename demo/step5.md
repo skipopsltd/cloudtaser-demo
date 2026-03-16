@@ -20,12 +20,12 @@ for line in sys.stdin:
 You should see an event like:
 ```json
 {
-  "msg": "ENVIRON READ BLOCKED",
+  "msg": "ENVIRON READ DETECTED",
   "pid": 1234,
   "type": "environ_read",
   "severity": "critical",
-  "blocked": true
+  "matched": true
 }
 ```
 
-This audit event would be forwarded to your SIEM/compliance platform in production, providing the evidence trail required by GDPR, NIS2, and DORA.
+Every `/proc/environ` access attempt on a protected process is logged with full context — PID, command name, timestamp, and severity. In production, these events are forwarded to your SIEM/compliance platform, providing the audit trail required by GDPR, NIS2, and DORA.
