@@ -1,6 +1,6 @@
 # Try to Read /proc/pid/environ
 
-This is the key security moment. On a normal Kubernetes node, anyone with host access can read a process's environment variables via `/proc/<pid>/environ`. CloudTaser's eBPF agent detects every such attempt.
+This is the key security moment. On a normal Kubernetes node, anyone with host access can read a process's environment variables via `/proc/<pid>/environ`. CloudTaser's eBPF agent **blocks this at the kernel level**.
 
 **Find the protected process's host PID:**
 
@@ -26,6 +26,6 @@ echo "Protected host PID: $PROTECTED_PID"
 cat /proc/${PROTECTED_PID}/environ 2>&1; echo "Exit code: $?"
 ```
 
-The eBPF agent **detected the access and killed the reader** (reactive enforcement via SIGKILL). On kernels with kprobe support (most production clusters), the `openat` syscall is blocked *before* any data is returned — the read gets `-EACCES`. On this demo kernel, the reactive kill fires after the read completes, but the access is still logged and the process terminated.
+You should see **"Permission denied"** — the eBPF kprobe intercepted the `openat` syscall and returned `-EACCES` *before any data was read*. This is synchronous kernel-level enforcement, not a race condition.
 
-Either way, the access attempt is **recorded in the audit trail** — which is what compliance frameworks (GDPR, NIS2, DORA) require.
+The access attempt is **recorded in the audit trail** — which is what compliance frameworks (GDPR, NIS2, DORA) require.
