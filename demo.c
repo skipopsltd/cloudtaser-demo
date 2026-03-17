@@ -121,6 +121,7 @@ typedef struct {
     const char *title;
     const char *desc[6];
     const char *commands[6];
+    const char *cmd_desc[6];
     const char *check;
 } Step;
 
@@ -140,6 +141,13 @@ static Step steps[] = {
             "kubectl get pod postgres-demo -o jsonpath='{.spec.containers[0].command}' | python3 -m json.tool",
             NULL
         },
+        {
+            "View the pod manifest — no secrets, just annotations",
+            "Deploy the pod — operator injects the wrapper sidecar",
+            "Wait for the pod to become ready",
+            "Inspect the injected command — wrapper wraps postgres",
+            NULL
+        },
         "kubectl get pod postgres-demo -o jsonpath='{.status.phase}' | grep -q Running"
     },
     {
@@ -155,6 +163,13 @@ static Step steps[] = {
             "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get \"\" --prefix --keys-only | grep -i postgres_password || echo \"Not found in etcd - secrets are safe\"",
             "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected successfully' as status;\"",
             "kubectl logs postgres-demo -c postgres | grep -E \"secrets loaded|fetching|unsealed\"",
+            NULL
+        },
+        {
+            "List all secrets in the namespace — none for postgres",
+            "Search etcd directly — no password stored anywhere",
+            "Connect to postgres — password works from memory",
+            "Check wrapper logs — secrets fetched from EU Vault",
             NULL
         },
         "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1"
@@ -173,6 +188,11 @@ static Step steps[] = {
             "cat /proc/$(cat /tmp/.protected_pid)/environ 2>&1; echo \"Exit code: $?\"",
             NULL
         },
+        {
+            "Find the protected process PID on the host",
+            "Try to read process environment — eBPF blocks it",
+            NULL
+        },
         "P=$(kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2) && cat /proc/$P/environ 2>/dev/null; test $? -ne 0"
     },
     {
@@ -185,6 +205,10 @@ static Step steps[] = {
         },
         {
             "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -E \"ENVIRON|blocked\"",
+            NULL
+        },
+        {
+            "View eBPF agent logs — every access attempt recorded",
             NULL
         },
         "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 2>/dev/null | grep -qi environ"
@@ -278,10 +302,14 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
 
     /* command info */
     mv(rr, rx);
-    if (cmd < ncmds)
+    if (cmd < ncmds) {
         printf(FG_YELLOW "Command %d/%d:" RESET, cmd + 1, ncmds);
-    else
+        if (s->cmd_desc[cmd]) {
+            printf(" %.*s", rmx - 16, s->cmd_desc[cmd]);
+        }
+    } else {
         printf(FG_GREEN "All commands completed" RESET);
+    }
     rr++;
 
     if (cmd < ncmds) {
