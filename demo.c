@@ -488,8 +488,8 @@ static void wait_for_setup(void) {
 
     printf(HIDE_CUR);
 
-    /* Phase 1: wait for kubernetes */
-    while (stat("/etc/kubernetes/admin.conf", &st) != 0) {
+    /* Phase 1: wait for kubernetes — show for at least 3 seconds */
+    for (;;) {
         get_size();
         int r = th / 2;
         mv(r, 1);
@@ -501,6 +501,8 @@ static void wait_for_setup(void) {
         fflush(stdout);
         frame++;
         usleep(200000);
+        /* need at least 15 frames (~3s) AND the file to exist */
+        if (frame >= 15 && stat("/etc/kubernetes/admin.conf", &st) == 0) break;
     }
 
     /* Phase 2: wait for CloudTaser install */
@@ -545,6 +547,7 @@ int main(void) {
     int btn = 0;
     int check_result = -1;
     int need_chrome = 1;
+    int dirty = 1;
 
     while (step < N_STEPS) {
         Step *s = &steps[step];
@@ -554,15 +557,21 @@ int main(void) {
         if (need_chrome) {
             draw_chrome(step);
             need_chrome = 0;
+            dirty = 1;
         }
-        draw_dynamic(step, cmd, ncmds, btn, output, check_result, 0);
+        if (dirty) {
+            draw_dynamic(step, cmd, ncmds, btn, output, check_result, 0);
+            dirty = 0;
+        }
 
         int key = readkey();
+        if (key == -1) continue; /* no input, don't redraw */
         if (key == 'q' || key == 3) break;
 
         if (key == K_LEFT || key == K_RIGHT) {
             if (cmd < ncmds) btn = 0;
             else if (cmd >= ncmds) btn = 1;
+            dirty = 1;
             continue;
         }
 
@@ -605,6 +614,7 @@ int main(void) {
                         check_result = 0;
                     }
                 }
+                dirty = 1;
             } else if (btn == 1 && cmd >= ncmds) {
                 step++;
                 cmd = 0;
@@ -612,6 +622,7 @@ int main(void) {
                 output[0] = '\0';
                 check_result = -1;
                 need_chrome = 1;
+                dirty = 1;
             }
         }
     }
