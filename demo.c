@@ -439,35 +439,45 @@ static void draw_finish(void) {
     draw_cloud_taser(r, cx - 5); r += 2;
     mv(r, cx - 7); printf(BOLD FG_GREEN "Demo Complete!" RESET); r += 2;
 
-    /* content block — widest line is the table at 57 chars */
-    int block_w = 57;
+    /* content block — widest line is the table at 62 chars */
+    int block_w = 62;
     int lx = (W - block_w) / 2;
     if (lx < 3) lx = 3;
 
-    /* bullet x is at lx+2 (for "* "); heading aligns with bullets */
-    const char *lines[] = {
-        "You've seen CloudTaser in action:",
-        "",
-        "* Secrets never touch Kubernetes - no etcd, no K8s Secrets",
-        "* Applications work normally - secrets available in memory",
-        "* eBPF enforcement blocks /proc/environ at kernel level",
-        "* Full audit trail - every event logged for compliance",
-        "",
-        "           CloudTaser vs Alternatives",
-        "+-----------------------+--------+----------+----------+",
-        "|                       | K8s    | External | Cloud    |",
-        "|                       | Secret | Secrets  | Taser    |",
-        "+-----------------------+--------+----------+----------+",
-        "| Secrets in etcd       |  YES   |   YES    |   NO     |",
-        "| /proc/environ blocked |  NO    |   NO     |   YES    |",
-        "| Provider can read     |  YES   |   YES    |   NO     |",
-        "| CLOUD Act resistant   |  NO    |   NO     |   YES    |",
-        "+-----------------------+--------+----------+----------+",
-        NULL
-    };
-    for (int i = 0; lines[i]; i++) {
-        mv(r, lx); printf("%s", lines[i]); r++;
-    }
+    /* bullet list — heading aligns with bullets */
+    mv(r, lx); printf("You've seen CloudTaser in action:"); r += 2;
+    mv(r, lx); printf("* Secrets never touch Kubernetes - no etcd, no K8s Secrets"); r++;
+    mv(r, lx); printf("* Applications work normally - secrets available in memory"); r++;
+    mv(r, lx); printf("* eBPF enforcement blocks /proc/environ at kernel level"); r++;
+    mv(r, lx); printf("* Full audit trail - every event logged for compliance"); r += 2;
+
+    /* colored comparison table */
+    /* col widths (visible): label=21, K8s=6, ESO=6, Vault=7, CSI=6, CT=9 */
+    /* total: 21+6+6+7+6+9 + 7 borders = 62 */
+    #define SEP "+---------------------+------+------+-------+------+---------+"
+    #define RY FG_RED                   /* red for bad values */
+    #define GV FG_GREEN                 /* green for good values */
+    #define YV FG_YELLOW                /* yellow for ambiguous */
+    #define R RESET
+
+    mv(r, lx); printf("          CloudTaser vs Alternatives"); r++;
+    mv(r, lx); printf(SEP); r++;
+    mv(r, lx); printf("|                     | K8s  | Ext  | Vault | CSI  |  Cloud  |"); r++;
+    mv(r, lx); printf("|                     | Sec  | Sec  | Injct | Drv  |  Taser  |"); r++;
+    mv(r, lx); printf(SEP); r++;
+    mv(r, lx); printf("| Secrets in etcd     |" RY " YES  " R "|" RY " YES  " R "|" GV "  NO   " R "|" YV " opt  " R "|" GV "   NO    " R "|"); r++;
+    mv(r, lx); printf("| Secrets on tmpfs    |" RY " YES  " R "|" RY " YES  " R "|" RY " YES   " R "|" RY " YES  " R "|" GV "   NO    " R "|"); r++;
+    mv(r, lx); printf("| /proc blocked       |" RY "  NO  " R "|" RY "  NO  " R "|" RY "  NO   " R "|" RY "  NO  " R "|" GV "  YES    " R "|"); r++;
+    mv(r, lx); printf("| Runtime enforcement |" RY "  NO  " R "|" RY "  NO  " R "|" RY "  NO   " R "|" RY "  NO  " R "|" GV "  YES    " R "|"); r++;
+    mv(r, lx); printf("| Provider can read   |" RY " YES  " R "|" RY " YES  " R "|" RY " YES   " R "|" RY " YES  " R "|" GV "   NO    " R "|"); r++;
+    mv(r, lx); printf("| CLOUD Act resistant |" RY "  NO  " R "|" RY "  NO  " R "|" RY "  NO   " R "|" RY "  NO  " R "|" GV "  YES    " R "|"); r++;
+    mv(r, lx); printf(SEP); r++;
+
+    #undef SEP
+    #undef RY
+    #undef GV
+    #undef YV
+    #undef R
 
     /* links near the exit button */
     mv(H - 5, cx - 7); printf(FG_CYAN "cloudtaser.io" RESET);
