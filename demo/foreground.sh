@@ -1,2 +1,2 @@
 clear
-/usr/local/bin/wait
+/usr/local/bin/demo
