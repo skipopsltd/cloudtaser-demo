@@ -7,12 +7,7 @@
       "background": "setup.sh",
       "foreground": "foreground.sh"
     },
-    "steps": [
-      {"text": "step1.md", "title": "Interactive Demo"}
-    ],
-    "finish": {
-      "text": "finish.md"
-    },
+    "steps": [],
     "assets": {
       "host01": [
         {"file": "values-demo.yaml", "target": "/tmp/"},
