@@ -186,8 +186,8 @@ static Step steps[] = {
             NULL
         },
         {
-            "PROTECTED_PID=$(kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2) && echo \"Protected PID: $PROTECTED_PID\"",
-            "cat /proc/${PROTECTED_PID}/environ 2>&1; echo \"Exit code: $?\"",
+            "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2 | tee /tmp/.protected_pid | xargs -I{} echo \"Protected PID: {}\"",
+            "cat /proc/$(cat /tmp/.protected_pid)/environ 2>&1; echo \"Exit code: $?\"",
             NULL
         },
         "P=$(kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2) && cat /proc/$P/environ 2>/dev/null; test $? -ne 0"
