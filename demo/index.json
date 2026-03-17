@@ -21,7 +21,8 @@
       "host01": [
         {"file": "values-demo.yaml", "target": "/tmp/"},
         {"file": "postgres-demo.yaml", "target": "/tmp/"},
-        {"file": "wait", "target": "/usr/local/bin/", "chmod": "+x"}
+        {"file": "wait", "target": "/usr/local/bin/", "chmod": "+x"},
+        {"file": "demo", "target": "/usr/local/bin/", "chmod": "+x"}
       ]
     }
   },
