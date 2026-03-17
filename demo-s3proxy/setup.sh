@@ -11,20 +11,11 @@ PROVISIONER_TOKEN="demo-provisioner-v1"
 echo "Installing tools..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq jq xxd unzip
+apt-get install -y -qq jq xxd
 
-# AWS CLI v2 — official installer (awscli apt package unavailable on newer Ubuntu)
-curl -sf "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
-unzip -qo /tmp/awscliv2.zip -d /tmp
-/tmp/aws/install
-
-# Configure AWS CLI for path-style addressing (MinIO compatible)
-mkdir -p /root/.aws
-cat > /root/.aws/config <<'AWSCFG'
-[default]
-s3 =
-  addressing_style = path
-AWSCFG
+# MinIO Client — single Go binary, S3-compatible
+curl -sf https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+chmod +x /usr/local/bin/mc
 
 touch /tmp/.tools-installed
 
@@ -49,9 +40,6 @@ BUCKET="cloudtaser-demo-$(cat /proc/sys/kernel/random/uuid | cut -d- -f1)"
 
 # Store demo environment
 cat > /tmp/.demo-env <<DEMOENV
-export AWS_ACCESS_KEY_ID=Q3AM3UQ867SPQQA43P2F
-export AWS_SECRET_ACCESS_KEY=zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
-export AWS_DEFAULT_REGION=us-east-1
 export BUCKET=${BUCKET}
 export EU_VAULT=${EU_VAULT}
 DEMOENV
@@ -59,8 +47,12 @@ DEMOENV
 echo 'source /tmp/.demo-env 2>/dev/null' >> /root/.bashrc
 source /tmp/.demo-env
 
-# Create bucket on play.min.io
-aws --endpoint-url https://play.min.io s3 mb s3://$BUCKET
+# Configure mc aliases — cloud (direct MinIO) and proxy (through CloudTaser)
+mc alias set cloud https://play.min.io Q3AM3UQ867SPQQA43P2F zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+mc alias set proxy http://localhost:8190 Q3AM3UQ867SPQQA43P2F zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+
+# Create bucket
+mc mb cloud/$BUCKET
 
 # Wait for image pull
 wait
