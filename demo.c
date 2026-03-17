@@ -29,6 +29,7 @@
 #define BG_GREEN   CSI "42m"
 #define BG_GRAY    CSI "100m"
 #define BG_BLUE    CSI "44m"
+#define FG_PINK    CSI "95m"
 #define CLR_LINE   CSI "2K"
 
 /* ── Terminal ────────────────────────────────────────────────────── */
@@ -83,6 +84,34 @@ static void mv(int r, int c) { printf(CSI "%d;%dH", r, c); }
 static void fill_ch(int r, int c, int n, char ch) {
     mv(r, c);
     for (int i = 0; i < n; i++) putchar(ch);
+}
+
+/* ── Print line with password highlighted in pink ─────────────────── */
+static void print_highlighted(const char *line, int maxlen,
+                              const char *highlight) {
+    if (!highlight || !highlight[0]) {
+        printf(FG_WHITE "%.*s" RESET, maxlen, line);
+        return;
+    }
+    int hlen = strlen(highlight);
+    const char *p = line;
+    const char *end = line + maxlen;
+    while (p < end && *p) {
+        /* find next occurrence */
+        const char *match = NULL;
+        for (const char *s = p; s + hlen <= end && *s; s++) {
+            if (strncmp(s, highlight, hlen) == 0) { match = s; break; }
+        }
+        if (match) {
+            if (match > p)
+                printf(FG_WHITE "%.*s" RESET, (int)(match - p), p);
+            printf(BOLD FG_PINK "%.*s" RESET, hlen, match);
+            p = match + hlen;
+        } else {
+            printf(FG_WHITE "%.*s" RESET, (int)(end - p), p);
+            break;
+        }
+    }
 }
 
 /* ── Run command, capture output ─────────────────────────────────── */
@@ -157,22 +186,21 @@ static Step steps[] = {
         {
             "Type any password you want below.",
             "It goes to EU OpenBao vault in Frankfurt.",
-            "Verify at: https://secret.cloudtaser.io/ui",
             "This is the LAST time you see it in plain text.",
             NULL
         },
         {
             "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" -H \"Content-Type: application/json\" -d \"{\\\"data\\\": {\\\"password\\\": \\\"$(cat /tmp/.user_password)\\\", \\\"username\\\": \\\"postgres\\\"}}\" && echo \"Secret updated in EU Vault (Frankfurt)\"",
             "curl -sf \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" | python3 -c 'import sys,json; d=json.load(sys.stdin)[\"data\"][\"data\"]; print(\"Password in vault: \" + d[\"password\"])'",
-            "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; kubectl apply -f /tmp/postgres-demo.yaml",
-            "kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s",
+            "echo \"=== See for yourself ===\" && echo \"URL:   https://secret.cloudtaser.io/ui\" && echo \"Path:  secret > demo > $(cat /tmp/.session_id) > postgres\" && echo \"Token: $(cat /tmp/.cloudtaser-session-token)\"",
+            "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; kubectl apply -f /tmp/postgres-demo.yaml && kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s",
             NULL
         },
         {
             "Write YOUR password to EU OpenBao vault (Frankfurt)",
-            "Read it back from vault — proof it's stored in EU",
-            "Recreate the pod to pick up the new secret",
-            "Wait for pod ready with your password",
+            "Read it back — proof it's stored in EU",
+            "Vault UI credentials — see for yourself",
+            "Recreate pod with your new secret",
             NULL
         },
         "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1",
@@ -189,15 +217,15 @@ static Step steps[] = {
         {
             "kubectl get secrets -n default",
             "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get \"\" --prefix --keys-only | grep -i postgres_password || echo \"Not found in etcd - secrets are safe\"",
+            "kubectl exec postgres-demo -- bash -c 'echo \"POSTGRES_PASSWORD=$POSTGRES_PASSWORD\"'",
             "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected with YOUR password' as status;\"",
-            "kubectl logs postgres-demo -c postgres | grep -E \"secrets loaded|fetching|unsealed\"",
             NULL
         },
         {
             "List all secrets in the namespace — none for postgres",
             "Search etcd directly — no password stored anywhere",
-            "Connect to postgres — YOUR password works from memory",
-            "Check wrapper logs — secrets fetched from EU Vault",
+            "Show password from process memory — same as yours",
+            "Connect to postgres — YOUR password works",
             NULL
         },
         "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1",
@@ -482,7 +510,7 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
                 if (cur >= skip) {
                     mv(cy + shown, cx);
                     int sh = llen > ob_inner_w ? ob_inner_w : llen;
-                    printf(FG_WHITE "%.*s" RESET, sh, p);
+                    print_highlighted(p, sh, user_input);
                     shown++;
                 }
                 cur++;
