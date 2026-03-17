@@ -105,7 +105,7 @@ static void print_highlighted(const char *line, int maxlen,
         if (match) {
             if (match > p)
                 printf(FG_WHITE "%.*s" RESET, (int)(match - p), p);
-            printf(BOLD FG_PINK "%.*s" RESET, hlen, match);
+            printf(BOLD CSI "45;97m" " %.*s " RESET, hlen, match);
             p = match + hlen;
         } else {
             printf(FG_WHITE "%.*s" RESET, (int)(end - p), p);
