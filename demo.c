@@ -114,6 +114,30 @@ static void print_highlighted(const char *line, int maxlen,
     }
 }
 
+/* ── Substitute __PASSWORD__ placeholder with user_input ─────────── */
+#define PH "__PASSWORD__"
+#define MAX_CMD 4096
+
+static void expand_cmd(const char *tpl, char *out, int maxlen,
+                       const char *password) {
+    int phlen = strlen(PH);
+    const char *p = tpl;
+    int pos = 0;
+    while (*p && pos < maxlen - 1) {
+        if (strncmp(p, PH, phlen) == 0) {
+            int plen = password ? (int)strlen(password) : 0;
+            if (pos + plen < maxlen - 1) {
+                memcpy(out + pos, password, plen);
+                pos += plen;
+            }
+            p += phlen;
+        } else {
+            out[pos++] = *p++;
+        }
+    }
+    out[pos] = '\0';
+}
+
 /* ── Run command, capture output ─────────────────────────────────── */
 #define MAX_OUT 16384
 
@@ -190,7 +214,7 @@ static Step steps[] = {
             NULL
         },
         {
-            "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" -H \"Content-Type: application/json\" -d \"{\\\"data\\\": {\\\"password\\\": \\\"$(cat /tmp/.user_password)\\\", \\\"username\\\": \\\"postgres\\\"}}\" && echo \"Secret updated in EU Vault (Frankfurt)\"",
+            "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" -H \"Content-Type: application/json\" -d \"{\\\"data\\\": {\\\"password\\\": \\\"__PASSWORD__\\\", \\\"username\\\": \\\"postgres\\\"}}\" && echo \"Secret updated in EU Vault (Frankfurt)\"",
             "curl -sf \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" | python3 -c 'import sys,json; d=json.load(sys.stdin)[\"data\"][\"data\"]; print(\"Password in vault: \" + d[\"password\"])'",
             "echo \"=== See for yourself ===\" && echo -e \"URL:   \\033[44;97m https://secret.cloudtaser.io/ui \\033[0m\" && echo \"Path:  demo/$(cat /tmp/.session_id)/postgres\" && echo \"Token: $(cat /tmp/.cloudtaser-session-token)\"",
             "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; kubectl apply -f /tmp/postgres-demo.yaml && kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s",
@@ -218,7 +242,7 @@ static Step steps[] = {
             "kubectl get secrets -n default",
             "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get \"\" --prefix --keys-only | grep -i postgres_password || echo \"Not found in etcd - secrets are safe\"",
             "kubectl exec postgres-demo -- bash -c 'echo \"POSTGRES_PASSWORD=$POSTGRES_PASSWORD\"' || true",
-            "echo \"Connecting with password: $(cat /tmp/.user_password)\" && kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\"",
+            "echo \"Connecting with password: __PASSWORD__\" && kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\"",
             NULL
         },
         {
@@ -739,9 +763,6 @@ int main(void) {
 
             if (key == '\n' || key == '\r') {
                 if (input_len > 0) {
-                    /* save to file */
-                    FILE *f = fopen("/tmp/.user_password", "w");
-                    if (f) { fprintf(f, "%s", user_input); fclose(f); }
                     input_mode = 0;
                     dirty = 1;
                 }
@@ -781,8 +802,11 @@ int main(void) {
             if (btn == 0 && cmd < ncmds) {
                 draw_dynamic(step, cmd, ncmds, btn, output, check_result, 1);
 
+                char expanded[MAX_CMD];
+                expand_cmd(s->commands[cmd], expanded, MAX_CMD, user_input);
+
                 char cmd_out[MAX_OUT];
-                run_cmd(s->commands[cmd], cmd_out, MAX_OUT);
+                run_cmd(expanded, cmd_out, MAX_OUT);
 
                 output[0] = '\0';
                 int olen = 0;
