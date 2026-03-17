@@ -4,13 +4,15 @@
 
 int main(void) {
     struct stat st;
-    printf("Preparing the demo");
+    const char spin[] = "|/-\\";
+    int i = 0;
+    printf("Preparing the demo  ");
     fflush(stdout);
     while (stat("/tmp/.cloudtaser-setup-done", &st) != 0) {
-        printf(".");
+        printf("\b%c", spin[i++ & 3]);
         fflush(stdout);
-        sleep(2);
+        usleep(200000);
     }
-    printf("done\n");
+    printf("\bdone\n");
     return 0;
 }
