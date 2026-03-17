@@ -208,14 +208,14 @@ static Step steps[] = {
             NULL
         },
         {
-            "source /tmp/.demo-env && aws --endpoint-url http://localhost:8190 s3 cp /tmp/confidential-report.txt s3://$BUCKET/reports/q1-2026.txt",
+            "source /tmp/.demo-env && mc cp /tmp/confidential-report.txt proxy/$BUCKET/reports/q1-2026.txt",
             NULL
         },
         {
             "Upload through proxy — encrypted before sending",
             NULL
         },
-        "source /tmp/.demo-env && aws --endpoint-url http://localhost:8190 s3api head-object --bucket $BUCKET --key reports/q1-2026.txt > /dev/null 2>&1",
+        "source /tmp/.demo-env && mc stat proxy/$BUCKET/reports/q1-2026.txt > /dev/null 2>&1",
         NULL
     },
     {
@@ -227,9 +227,9 @@ static Step steps[] = {
             NULL
         },
         {
-            "source /tmp/.demo-env && aws --endpoint-url https://play.min.io s3 cp s3://$BUCKET/reports/q1-2026.txt /tmp/cloud-raw.bin 2>/dev/null && echo \"=== Raw bytes in the cloud ===\" && xxd /tmp/cloud-raw.bin | head -20",
+            "source /tmp/.demo-env && mc cp cloud/$BUCKET/reports/q1-2026.txt /tmp/cloud-raw.bin 2>/dev/null && echo \"=== Raw bytes in the cloud ===\" && xxd /tmp/cloud-raw.bin | head -20",
             "echo \"Original:  $(wc -c < /tmp/confidential-report.txt) bytes\" && echo \"Encrypted: $(wc -c < /tmp/cloud-raw.bin) bytes (AES-256-GCM overhead)\"",
-            "source /tmp/.demo-env && aws --endpoint-url https://play.min.io s3api head-object --bucket $BUCKET --key reports/q1-2026.txt --query 'Metadata' --output json | python3 -m json.tool",
+            "source /tmp/.demo-env && mc stat cloud/$BUCKET/reports/q1-2026.txt 2>/dev/null | grep -i 'X-Amz-Meta-Cloudtaser'",
             NULL
         },
         {
@@ -251,7 +251,7 @@ static Step steps[] = {
             NULL
         },
         {
-            "source /tmp/.demo-env && aws --endpoint-url http://localhost:8190 s3 cp s3://$BUCKET/reports/q1-2026.txt /tmp/decrypted.txt 2>/dev/null && cat /tmp/decrypted.txt",
+            "source /tmp/.demo-env && mc cp proxy/$BUCKET/reports/q1-2026.txt /tmp/decrypted.txt 2>/dev/null && cat /tmp/decrypted.txt",
             "diff /tmp/confidential-report.txt /tmp/decrypted.txt && echo \"Byte-perfect match — lossless decryption\"",
             NULL
         },
