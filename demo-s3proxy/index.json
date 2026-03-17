@@ -1,22 +1,17 @@
 {
   "title": "CloudTaser S3 Proxy: Client-Side Encryption for Object Storage",
-  "description": "Encrypt data before it reaches the cloud — the provider never sees your plaintext",
+  "description": "Encrypt data before it reaches the cloud — the provider never sees your plaintext.",
   "details": {
     "intro": {
       "text": "intro.md",
       "background": "setup.sh",
       "foreground": "foreground.sh"
     },
-    "steps": [
-      { "title": "Upload a Confidential Document", "text": "step1.md" },
-      { "title": "What the Cloud Provider Sees", "text": "step2.md" },
-      { "title": "What Your Application Sees", "text": "step3.md" },
-      { "title": "The Encryption Envelope", "text": "step4.md" }
-    ],
-    "finish": { "text": "finish.md" },
+    "steps": [],
     "assets": {
       "host01": [
-        { "file": "assets/confidential-report.txt", "target": "/tmp/" }
+        {"file": "assets/confidential-report.txt", "target": "/tmp/"},
+        {"file": "assets/demo", "target": "/usr/local/bin/", "chmod": "+x"}
       ]
     }
   },

@@ -18,6 +18,8 @@ s3 =
   addressing_style = path
 AWSCFG
 
+touch /tmp/.tools-installed
+
 # Pull S3 proxy image
 docker pull ghcr.io/skipopsltd/cloudtaser-s3-proxy:v0.2.2-amd64 > /dev/null 2>&1 &
 
@@ -35,7 +37,7 @@ fi
 echo "Session token acquired (1h TTL, scoped to demo paths)"
 
 # Create a unique bucket on play.min.io
-BUCKET="cloudtaser-demo-$(date +%s)"
+BUCKET="cloudtaser-demo-$(cat /proc/sys/kernel/random/uuid | cut -d- -f1)"
 
 # Store demo environment
 cat > /tmp/.demo-env <<DEMOENV
