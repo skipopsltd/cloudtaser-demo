@@ -437,38 +437,45 @@ static void draw_finish(void) {
     int r = 3;
 
     draw_cloud_taser(r, cx - 5); r += 2;
-    mv(r, cx - 8); printf(BOLD FG_GREEN "Demo Complete!" RESET); r += 2;
+    mv(r, cx - 7); printf(BOLD FG_GREEN "Demo Complete!" RESET); r += 2;
 
+    /* content block — widest line is the table at 57 chars */
+    int block_w = 57;
+    int lx = (W - block_w) / 2;
+    if (lx < 3) lx = 3;
+
+    /* bullet x is at lx+2 (for "* "); heading aligns with bullets */
     const char *lines[] = {
         "You've seen CloudTaser in action:",
         "",
-        "  * Secrets never touch Kubernetes - no etcd, no K8s Secrets",
-        "  * Applications work normally - secrets available in memory",
-        "  * eBPF enforcement blocks /proc/environ at kernel level",
-        "  * Full audit trail - every event logged for compliance",
+        "* Secrets never touch Kubernetes - no etcd, no K8s Secrets",
+        "* Applications work normally - secrets available in memory",
+        "* eBPF enforcement blocks /proc/environ at kernel level",
+        "* Full audit trail - every event logged for compliance",
         "",
-        "                 CloudTaser vs Alternatives",
-        "  +-----------------------+--------+----------+----------+",
-        "  |                       | K8s    | External | Cloud    |",
-        "  |                       | Secret | Secrets  | Taser    |",
-        "  +-----------------------+--------+----------+----------+",
-        "  | Secrets in etcd       |  YES   |   YES    |   NO     |",
-        "  | /proc/environ blocked |  NO    |   NO     |   YES    |",
-        "  | Provider can read     |  YES   |   YES    |   NO     |",
-        "  | CLOUD Act resistant   |  NO    |   NO     |   YES    |",
-        "  +-----------------------+--------+----------+----------+",
+        "           CloudTaser vs Alternatives",
+        "+-----------------------+--------+----------+----------+",
+        "|                       | K8s    | External | Cloud    |",
+        "|                       | Secret | Secrets  | Taser    |",
+        "+-----------------------+--------+----------+----------+",
+        "| Secrets in etcd       |  YES   |   YES    |   NO     |",
+        "| /proc/environ blocked |  NO    |   NO     |   YES    |",
+        "| Provider can read     |  YES   |   YES    |   NO     |",
+        "| CLOUD Act resistant   |  NO    |   NO     |   YES    |",
+        "+-----------------------+--------+----------+----------+",
         NULL
     };
     for (int i = 0; lines[i]; i++) {
-        mv(r, 4); printf("  %s", lines[i]); r++;
+        mv(r, lx); printf("%s", lines[i]); r++;
     }
-    r++;
-    mv(r, cx - 10); printf(FG_CYAN "cloudtaser.io" RESET);
-    mv(r + 1, cx - 10); printf(DIM "cloud@skipops.ltd" RESET);
+
+    /* links near the exit button */
+    mv(H - 5, cx - 7); printf(FG_CYAN "cloudtaser.io" RESET);
+    mv(H - 4, cx - 9); printf(DIM "cloud@skipops.ltd" RESET);
 
     mv(H - 2, cx - 6);
     printf(BOLD BG_GREEN FG_WHITE " [ EXIT ] " RESET);
-    mv(H - 1, cx - 10);
+    mv(H - 1, cx - 13);
     printf(DIM "Press ENTER or 'q' to exit" RESET);
     fflush(stdout);
 }
