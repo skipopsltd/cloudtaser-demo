@@ -210,22 +210,22 @@ static Step steps[] = {
         "Verify: No Secrets in K8s, YOUR Password Works",
         {
             "Your password never touched Kubernetes.",
-            "No K8s Secrets, no etcd — yet postgres connects.",
-            "The wrapper fetched it from EU Vault into memory.",
+            "Not in K8s Secrets, not in etcd, not even in env.",
+            "Yet the app works — secrets live only in process memory.",
             NULL
         },
         {
             "kubectl get secrets -n default",
             "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get \"\" --prefix --keys-only | grep -i postgres_password || echo \"Not found in etcd - secrets are safe\"",
-            "kubectl exec postgres-demo -- bash -c 'echo \"POSTGRES_PASSWORD=$POSTGRES_PASSWORD\"'",
+            "kubectl exec postgres-demo -- bash -c 'echo \"POSTGRES_PASSWORD=$POSTGRES_PASSWORD\"' || true",
             "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected with YOUR password' as status;\"",
             NULL
         },
         {
-            "List all secrets in the namespace — none for postgres",
-            "Search etcd directly — no password stored anywhere",
-            "Show password from process memory — same as yours",
-            "Connect to postgres — YOUR password works",
+            "List all secrets — none for postgres",
+            "Search etcd directly — not there either",
+            "Try to read password via exec — EMPTY, not in env",
+            "Yet postgres connects — secret is in process memory only",
             NULL
         },
         "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1",
