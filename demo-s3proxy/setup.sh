@@ -47,9 +47,8 @@ DEMOENV
 echo 'source /tmp/.demo-env 2>/dev/null' >> /root/.bashrc
 source /tmp/.demo-env
 
-# Configure mc aliases — cloud (direct MinIO) and proxy (through CloudTaser)
+# Configure mc alias for cloud (direct MinIO) — proxy alias set after container starts
 mc alias set cloud https://play.min.io Q3AM3UQ867SPQQA43P2F zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
-mc alias set proxy http://localhost:8190 Q3AM3UQ867SPQQA43P2F zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
 
 # Create bucket
 mc mb cloud/$BUCKET
@@ -76,6 +75,9 @@ for i in $(seq 1 30); do
   fi
   sleep 1
 done
+
+# Now proxy is up — set the alias
+mc alias set proxy http://localhost:8190 Q3AM3UQ867SPQQA43P2F zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
 
 touch /tmp/.cloudtaser-setup-done
 echo "CloudTaser S3 proxy demo ready!"
