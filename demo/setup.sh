@@ -13,7 +13,7 @@ kubectl wait --for=condition=Ready node --all --timeout=300s
 echo "Setting up CloudTaser demo environment..."
 
 # Generate unique session ID for this demo instance
-SESSION_ID=$(cat /dev/urandom | tr -dc 'a-z0-9' | head -c 8)
+SESSION_ID=$(cat /proc/sys/kernel/random/uuid | cut -d- -f1)
 echo "$SESSION_ID" > /tmp/.session_id
 echo "Session ID: $SESSION_ID"
 
