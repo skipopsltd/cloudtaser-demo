@@ -9,7 +9,7 @@ kubectl exec postgres-demo -- psql -U postgres -c "SELECT 'Connected successfull
 The wrapper injected `POSTGRES_PASSWORD` directly into the postgres process memory. You can see it in the wrapper's startup logs:
 
 ```bash
-kubectl logs postgres-demo -c postgres | head -5
+kubectl logs postgres-demo -c postgres | grep -E "secrets loaded|fetching|unsealed"
 ```
 
-Notice `secrets loaded` and `secret_count:2` — the password and username were fetched from Vault and passed to postgres at startup, without ever being stored in Kubernetes.
+Notice the secrets were fetched from Vault and passed to postgres at startup, without ever being stored in Kubernetes.
