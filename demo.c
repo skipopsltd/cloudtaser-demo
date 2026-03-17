@@ -192,7 +192,7 @@ static Step steps[] = {
         {
             "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" -H \"Content-Type: application/json\" -d \"{\\\"data\\\": {\\\"password\\\": \\\"$(cat /tmp/.user_password)\\\", \\\"username\\\": \\\"postgres\\\"}}\" && echo \"Secret updated in EU Vault (Frankfurt)\"",
             "curl -sf \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" | python3 -c 'import sys,json; d=json.load(sys.stdin)[\"data\"][\"data\"]; print(\"Password in vault: \" + d[\"password\"])'",
-            "echo \"=== See for yourself ===\" && echo \"URL:   https://secret.cloudtaser.io/ui\" && echo \"Path:  secret > demo > $(cat /tmp/.session_id) > postgres\" && echo \"Token: $(cat /tmp/.cloudtaser-session-token)\"",
+            "echo \"=== See for yourself ===\" && echo \"URL:   https://secret.cloudtaser.io/ui\" && echo \"Path:  demo/$(cat /tmp/.session_id)/postgres\" && echo \"Token: $(cat /tmp/.cloudtaser-session-token)\"",
             "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; kubectl apply -f /tmp/postgres-demo.yaml && kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s",
             NULL
         },
