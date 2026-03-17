@@ -34,7 +34,7 @@ ebpf:
   enabled: true
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-ebpf
-    tag: "v0.1.7-amd64"
+    tag: "v0.1.8-amd64"
     pullPolicy: Always
   enforceMode: true
   logAll: false
