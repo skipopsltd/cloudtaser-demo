@@ -8,11 +8,7 @@
       "foreground": "foreground.sh"
     },
     "steps": [
-      {"text": "step1.md", "title": "Deploy a protected PostgreSQL pod"},
-      {"text": "step2.md", "title": "Verify secrets are not in Kubernetes"},
-      {"text": "step3.md", "title": "Confirm secrets work inside the pod"},
-      {"text": "step4.md", "title": "Try to read /proc/pid/environ"},
-      {"text": "step5.md", "title": "View the audit trail"}
+      {"text": "step1.md", "title": "Interactive Demo"}
     ],
     "finish": {
       "text": "finish.md"
