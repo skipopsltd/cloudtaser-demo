@@ -1,6 +1,6 @@
 /*
  * CloudTaser Interactive Demo — Fullscreen TUI
- * Split layout: left=product summary, right=interactive steps
+ * Full-width layout, yellow output box, 4 steps
  * Cross-compile: x86_64-linux-musl-gcc -static -Os -s -o demo/assets/demo demo.c
  */
 #include <stdio.h>
@@ -80,11 +80,6 @@ static int readkey(void) {
 /* ── Drawing primitives ──────────────────────────────────────────── */
 static void mv(int r, int c) { printf(CSI "%d;%dH", r, c); }
 
-static void clear_row(int r, int from, int to) {
-    mv(r, from);
-    for (int i = from; i <= to; i++) putchar(' ');
-}
-
 static void fill_ch(int r, int c, int n, char ch) {
     mv(r, c);
     for (int i = 0; i < n; i++) putchar(ch);
@@ -148,28 +143,16 @@ static Step steps[] = {
         "kubectl get pod postgres-demo -o jsonpath='{.status.phase}' | grep -q Running"
     },
     {
-        "Verify Secrets Are Not in Kubernetes",
+        "Verify: No Secrets in K8s, App Still Works",
         {
             "Secrets never touch Kubernetes storage.",
-            "No K8s Secrets, no etcd. Let's prove it.",
+            "No K8s Secrets, no etcd — yet the app works.",
+            "The wrapper fetched them from EU Vault into memory.",
             NULL
         },
         {
             "kubectl get secrets -n default",
             "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get \"\" --prefix --keys-only | grep -i postgres_password || echo \"Not found in etcd - secrets are safe\"",
-            NULL
-        },
-        "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get '' --prefix --keys-only 2>/dev/null | grep -qi postgres_password; test $? -ne 0"
-    },
-    {
-        "Confirm Secrets Work Inside the Pod",
-        {
-            "PostgreSQL requires POSTGRES_PASSWORD to start.",
-            "The wrapper fetched it from EU Vault into memory.",
-            "App works normally - secrets are just invisible.",
-            NULL
-        },
-        {
             "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected successfully' as status;\"",
             "kubectl logs postgres-demo -c postgres | grep -E \"secrets loaded|fetching|unsealed\"",
             NULL
@@ -209,96 +192,54 @@ static Step steps[] = {
 };
 #define N_STEPS (int)(sizeof(steps) / sizeof(steps[0]))
 
-/* ── Layout ──────────────────────────────────────────────────────── */
-#define LEFT_W 32
-
+/* ── Branded title helper ────────────────────────────────────────── */
 static void draw_cloud_taser(int r, int c) {
     mv(r, c);
     printf(BOLD CSI "38;5;75mCloud" CSI "38;5;231mTaser" RESET);
 }
 
-/* Draw only the static frame (borders + left panel). Called once per step. */
+/* ── Draw static chrome (border + header + description). Once per step. ── */
 static void draw_chrome(int step) {
     get_size();
     int W = tw, H = th;
-    int lw = LEFT_W;
-    if (lw > W / 3) lw = W / 3;
-    int rw = W - lw;
 
     printf(CLEAR HIDE_CUR);
 
-    /* top border */
+    /* outer border */
     mv(1, 1); putchar('+');
-    for (int i = 0; i < lw - 2; i++) putchar('-');
-    putchar('+');
-    for (int i = 0; i < rw - 1; i++) putchar('-');
+    for (int i = 0; i < W - 2; i++) putchar('-');
     putchar('+');
 
-    /* side borders + divider */
     for (int r = 2; r < H; r++) {
         mv(r, 1); putchar('|');
-        mv(r, lw); putchar('|');
         mv(r, W); putchar('|');
     }
 
-    /* bottom border */
     mv(H, 1); putchar('+');
-    for (int i = 0; i < lw - 2; i++) putchar('-');
-    putchar('+');
-    for (int i = 0; i < rw - 1; i++) putchar('-');
+    for (int i = 0; i < W - 2; i++) putchar('-');
     putchar('+');
 
-    /* ── LEFT PANEL ──────────────────────────────────────────────── */
-    int lr = 2;
-    draw_cloud_taser(lr, 3); lr += 2;
-    mv(lr, 3); printf(DIM "EU Data Sovereignty" RESET); lr++;
-    mv(lr, 3); printf(DIM "on US Cloud" RESET); lr += 2;
-
-    const char *feat[] = {
-        BOLD FG_CYAN "*" RESET " Secrets " BOLD "never" RESET " in",
-        "  Kubernetes etcd",
-        "",
-        BOLD FG_CYAN "*" RESET " Fetched from " BOLD "EU Vault" RESET,
-        "  directly into memory",
-        "",
-        BOLD FG_CYAN "*" RESET " eBPF " BOLD "blocks" RESET,
-        "  /proc/environ reads",
-        "  at kernel level",
-        "",
-        BOLD FG_CYAN "*" RESET " Full " BOLD "audit trail" RESET,
-        "  for GDPR, NIS2, DORA",
-        "",
-        BOLD FG_CYAN "*" RESET " CLOUD Act / FISA 702",
-        "  " BOLD "resistant" RESET,
-        NULL
-    };
-    for (int i = 0; feat[i] && lr < H - 4; i++) {
-        if (feat[i][0] == '\0') { lr++; continue; }
-        mv(lr, 3); printf("%s", feat[i]); lr++;
-    }
-    mv(H - 3, 3); printf(FG_CYAN "cloudtaser.io" RESET);
-    mv(H - 2, 3); printf(DIM "cloud@skipops.ltd" RESET);
-
-    /* ── RIGHT PANEL: step header + description (static part) ───── */
-    int rx = lw + 2;
-    int rmx = W - rx - 1;
+    /* title row: CloudTaser branding + step title */
     int rr = 2;
-
+    draw_cloud_taser(rr, 3);
+    /* "CloudTaser" is 10 visible chars but has ANSI escapes; place step info after gap */
     Step *s = &steps[step];
     char hdr[128];
     snprintf(hdr, sizeof(hdr), "Step %d/%d: %s", step + 1, N_STEPS, s->title);
-    mv(rr, rx); printf(BOLD FG_WHITE "%.*s" RESET, rmx, hdr);
+    mv(rr, 16);
+    printf(DIM "|" RESET " " BOLD FG_WHITE "%.*s" RESET, W - 20, hdr);
     rr += 2;
 
+    /* description */
     for (int i = 0; s->desc[i] && rr < 9; i++) {
-        mv(rr, rx); printf("%.*s", rmx, s->desc[i]); rr++;
+        mv(rr, 3); printf("%.*s", W - 4, s->desc[i]); rr++;
     }
     rr++;
-    fill_ch(rr, lw + 1, rw - 1, '-');
+    fill_ch(rr, 2, W - 2, '-');
 
     /* progress bar */
-    mv(H - 1, lw + 1);
-    int bar_w = rw - 1;
+    mv(H - 1, 2);
+    int bar_w = W - 2;
     int filled = ((step + 1) * bar_w) / (N_STEPS + 1);
     for (int i = 0; i < bar_w; i++) {
         if (i < filled) printf(BG_BLUE " " RESET);
@@ -308,16 +249,13 @@ static void draw_chrome(int step) {
     fflush(stdout);
 }
 
-/* Update only the dynamic right-panel area (command, output, buttons). */
+/* ── Update dynamic area (command, output box, buttons). ──────────── */
 static void draw_dynamic(int step, int cmd, int ncmds, int btn,
                          const char *output, int check_result, int running) {
     get_size();
     int W = tw, H = th;
-    int lw = LEFT_W;
-    if (lw > W / 3) lw = W / 3;
-    int rw = W - lw;
-    int rx = lw + 2;
-    int rmx = W - rx - 1;
+    int rx = 3;          /* content left margin */
+    int rmx = W - 4;     /* max content width */
 
     /* find where dynamic area starts (after desc + divider) */
     Step *s = &steps[step];
@@ -327,14 +265,13 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
 
     /* clear dynamic area: from rr+1 to H-1 */
     for (int r = rr + 1; r < H; r++) {
-        mv(r, lw + 1);
-        for (int i = 0; i < rw - 1; i++) putchar(' ');
-        /* restore right border */
+        mv(r, 2);
+        for (int i = 0; i < W - 2; i++) putchar(' ');
         mv(r, W); putchar('|');
     }
     /* restore bottom border */
-    mv(H, lw); putchar('+');
-    for (int i = 0; i < rw - 1; i++) putchar('-');
+    mv(H, 1); putchar('+');
+    for (int i = 0; i < W - 2; i++) putchar('-');
     putchar('+');
 
     rr++;
@@ -362,41 +299,72 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
     }
     rr += 2;
 
-    /* divider */
-    fill_ch(rr, lw + 1, rw - 1, '-');
-    rr++;
+    /* output box with yellow border */
+    {
+        int ob_top = rr;
+        int ob_bot = H - 5;
+        int ob_left = 2;
+        int ob_right = W - 1;
+        int ob_inner_w = ob_right - ob_left - 2;
+        int ob_inner_h = ob_bot - ob_top - 1;
 
-    /* output */
-    mv(rr, rx); printf(FG_YELLOW "Output:" RESET); rr++;
+        /* top border */
+        mv(ob_top, ob_left);
+        printf(FG_YELLOW "+");
+        for (int i = 0; i < ob_right - ob_left - 1; i++) putchar('-');
+        printf("+" RESET);
 
-    if (running) {
-        mv(rr, rx); printf(DIM "Running..." RESET);
-    } else if (output && output[0]) {
-        int out_max = H - rr - 5;
-        if (out_max < 2) out_max = 2;
-        const char *p = output;
-        int total_lines = 0;
-        for (const char *q = p; *q; q++) if (*q == '\n') total_lines++;
-        if (output[strlen(output) - 1] != '\n') total_lines++;
-        int skip = total_lines - out_max;
-        if (skip < 0) skip = 0;
-
-        int cur = 0, shown = 0;
-        while (*p && shown < out_max) {
-            const char *eol = strchr(p, '\n');
-            int llen = eol ? (int)(eol - p) : (int)strlen(p);
-            if (cur >= skip) {
-                mv(rr + shown, rx);
-                int sh = llen > rmx ? rmx : llen;
-                printf(FG_WHITE "%.*s" RESET, sh, p);
-                shown++;
-            }
-            cur++;
-            p = eol ? eol + 1 : p + llen;
-            if (!eol) break;
+        /* side borders + clear interior */
+        for (int r = ob_top + 1; r < ob_bot; r++) {
+            mv(r, ob_left);
+            printf(FG_YELLOW "|" RESET);
+            for (int i = 0; i < ob_right - ob_left - 1; i++) putchar(' ');
+            printf(FG_YELLOW "|" RESET);
         }
-    } else {
-        mv(rr, rx); printf(DIM "(waiting for command)" RESET);
+
+        /* bottom border */
+        mv(ob_bot, ob_left);
+        printf(FG_YELLOW "+");
+        for (int i = 0; i < ob_right - ob_left - 1; i++) putchar('-');
+        printf("+" RESET);
+
+        /* label on top border */
+        mv(ob_top, ob_left + 2);
+        printf(FG_YELLOW " Output " RESET);
+
+        /* content inside box */
+        int cx = ob_left + 2;
+        int cy = ob_top + 1;
+
+        if (running) {
+            mv(cy, cx); printf(DIM "Running..." RESET);
+        } else if (output && output[0]) {
+            int out_max = ob_inner_h;
+            if (out_max < 2) out_max = 2;
+            const char *p = output;
+            int total_lines = 0;
+            for (const char *q = p; *q; q++) if (*q == '\n') total_lines++;
+            if (output[strlen(output) - 1] != '\n') total_lines++;
+            int skip = total_lines - out_max;
+            if (skip < 0) skip = 0;
+
+            int cur = 0, shown = 0;
+            while (*p && shown < out_max) {
+                const char *eol = strchr(p, '\n');
+                int llen = eol ? (int)(eol - p) : (int)strlen(p);
+                if (cur >= skip) {
+                    mv(cy + shown, cx);
+                    int sh = llen > ob_inner_w ? ob_inner_w : llen;
+                    printf(FG_WHITE "%.*s" RESET, sh, p);
+                    shown++;
+                }
+                cur++;
+                p = eol ? eol + 1 : p + llen;
+                if (!eol) break;
+            }
+        } else {
+            mv(cy, cx); printf(DIM "(waiting for command)" RESET);
+        }
     }
 
     /* result */
@@ -408,16 +376,15 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
             printf(BOLD FG_RED "Result: CHECK FAILED" RESET);
     }
 
-    /* buttons: [RUN]  [NEXT >>]  on same line */
+    /* buttons */
     {
         int br = H - 2;
-        int center = lw + rw / 2;
+        int center = W / 2;
         int run_col = center - 14;
         int next_col = center + 2;
 
         mv(br, run_col);
         if (cmd < ncmds) {
-            /* RUN active */
             if (btn == 0)
                 printf(BOLD BG_GREEN FG_WHITE " [ RUN ] " RESET);
             else
@@ -428,7 +395,6 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
 
         mv(br, next_col);
         if (cmd >= ncmds) {
-            /* NEXT active */
             if (btn == 1)
                 printf(BOLD BG_GREEN FG_WHITE " [ NEXT >> ] " RESET);
             else
@@ -437,14 +403,13 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
             printf(DIM FG_GRAY " [ NEXT >> ] " RESET);
         }
 
-        /* hint */
         mv(br + 1, center - 10);
         printf(DIM "< > arrows   ENTER confirm" RESET);
     }
 
     /* re-draw progress */
-    mv(H - 1, lw + 1);
-    int bar_w = rw - 1;
+    mv(H - 1, 2);
+    int bar_w = W - 2;
     int filled = ((step + 1) * bar_w) / (N_STEPS + 1);
     for (int i = 0; i < bar_w; i++) {
         if (i < filled) printf(BG_BLUE " " RESET);
@@ -589,27 +554,23 @@ int main(void) {
         if (key == 'q' || key == 3) break;
 
         if (key == K_LEFT || key == K_RIGHT) {
-            /* only allow switching to buttons that are active */
-            if (cmd < ncmds) btn = 0;      /* only RUN active */
-            else if (cmd >= ncmds) btn = 1; /* only NEXT active */
+            if (cmd < ncmds) btn = 0;
+            else if (cmd >= ncmds) btn = 1;
             continue;
         }
 
         if (key == '\n' || key == '\r') {
             if (btn == 0 && cmd < ncmds) {
-                /* show running indicator */
                 draw_dynamic(step, cmd, ncmds, btn, output, check_result, 1);
 
                 char cmd_out[MAX_OUT];
                 run_cmd(s->commands[cmd], cmd_out, MAX_OUT);
 
-                /* append to output */
                 int olen = strlen(output);
                 if (olen > 0 && olen < MAX_OUT - 2) {
                     output[olen++] = '\n';
                     output[olen] = '\0';
                 }
-                /* "$ command" header */
                 {
                     const char *c = s->commands[cmd];
                     const char *nl = strchr(c, '\n');
@@ -621,7 +582,6 @@ int main(void) {
                                          (nl || (int)strlen(c) > 60) ? "..." : "");
                     if (wrote > 0 && wrote < space) olen += wrote;
                 }
-                /* command output */
                 {
                     int clen = strlen(cmd_out);
                     int space = MAX_OUT - 1 - olen;
