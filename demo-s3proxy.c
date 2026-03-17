@@ -182,9 +182,9 @@ static Step steps[] = {
         "Add Your Own Confidential Data",
         {
             "Type any confidential text below.",
-            "It will be added to a financial report,",
-            "encrypted, and uploaded to the cloud.",
-            "Watch it disappear into ciphertext.",
+            "It becomes part of the document that gets uploaded.",
+            "The proxy encrypts with a unique AES-256-GCM key —",
+            "the cloud only ever sees ciphertext.",
             NULL
         },
         {
@@ -577,7 +577,7 @@ static void draw_finish(void) {
     r += 2;
     mv(r, cx - 7); printf(BOLD FG_GREEN "Demo Complete!" RESET); r += 2;
 
-    int block_w = 62;
+    int block_w = 82;
     int lx = (W - block_w) / 2;
     if (lx < 3) lx = 3;
 
@@ -587,22 +587,23 @@ static void draw_finish(void) {
     mv(r, lx); printf("* Per-object unique keys — AES-256-GCM, unique DEK each"); r++;
     mv(r, lx); printf("* EU key sovereignty — keys wrapped by EU Vault Transit"); r += 2;
 
-    #define SEP "+---------------------+--------+--------+--------+-----------+"
+    #define SEP "+--------------------+--------+--------+--------+--------+--------+--------------+"
     #define RY FG_RED
     #define GV FG_GREEN
     #define YV FG_YELLOW
     #define R RESET
 
-    mv(r, lx); printf("        CloudTaser S3 Proxy vs Server-Side Encryption"); r++;
+    mv(r, lx); printf("                 CloudTaser vs Cloud Provider Encryption"); r++;
     mv(r, lx); printf(SEP); r++;
-    mv(r, lx); printf("|                     | SSE-S3 |SSE-KMS | SSE-C  | CloudTaser|"); r++;
+    mv(r, lx); printf("|                    |  AWS   |  AWS   |  AWS   |  GCS   | Azure  |  CloudTaser  |"); r++;
+    mv(r, lx); printf("|                    | SSE-S3 |SSE-KMS | SSE-C  |  CMEK  |  CMK   |   S3 Proxy   |"); r++;
     mv(r, lx); printf(SEP); r++;
-    mv(r, lx); printf("| Provider sees data  |" RY "  YES   " R "|" RY "  YES   " R "|" YV " brief  " R "|" GV "    NO     " R "|"); r++;
-    mv(r, lx); printf("| Key held by         |" RY "  AWS   " R "|" RY " AWS KMS" R "|" YV "You>AWS " R "|" GV " EU Vault  " R "|"); r++;
-    mv(r, lx); printf("| CLOUD Act exposure  |" RY "  full  " R "|" RY "  full  " R "|" YV "  key   " R "|" GV "cipher only" R "|"); r++;
-    mv(r, lx); printf("| Code changes needed |" GV "  none  " R "|" YV " minor  " R "|" RY " major  " R "|" GV " URL only  " R "|"); r++;
-    mv(r, lx); printf("| Per-object keys     |" GV "  yes   " R "|" YV "  opt   " R "|" RY " manual " R "|" GV "    yes    " R "|"); r++;
-    mv(r, lx); printf("| Key rotation        |" RY "  AWS   " R "|" YV " AWS KMS" R "|" RY " manual " R "|" GV " EU Vault  " R "|"); r++;
+    mv(r, lx); printf("| Provider sees data |" RY "  YES   " R "|" RY "  YES   " R "|" YV " brief  " R "|" RY "  YES   " R "|" RY "  YES   " R "|" GV "      NO      " R "|"); r++;
+    mv(r, lx); printf("| Key held by        |" RY "  AWS   " R "|" RY "AWS KMS " R "|" YV "You>AWS " R "|" RY "GCP KMS " R "|" RY "Az Vault" R "|" GV "  EU Vault    " R "|"); r++;
+    mv(r, lx); printf("| CLOUD Act exposure |" RY "  full  " R "|" RY "  full  " R "|" YV "  key   " R "|" RY "  full  " R "|" RY "  full  " R "|" GV " cipher only  " R "|"); r++;
+    mv(r, lx); printf("| Code changes       |" GV "  none  " R "|" YV " minor  " R "|" RY " major  " R "|" GV "  none  " R "|" YV " minor  " R "|" GV "  URL only    " R "|"); r++;
+    mv(r, lx); printf("| Per-object keys    |" GV "  yes   " R "|" YV "  opt   " R "|" RY " manual " R "|" GV "  yes   " R "|" YV "  opt   " R "|" GV "     yes      " R "|"); r++;
+    mv(r, lx); printf("| Key rotation       |" RY "  AWS   " R "|" YV "AWS KMS " R "|" RY " manual " R "|" RY "GCP KMS " R "|" YV "Az Vault" R "|" GV "  EU Vault    " R "|"); r++;
     mv(r, lx); printf(SEP); r++;
 
     #undef SEP
