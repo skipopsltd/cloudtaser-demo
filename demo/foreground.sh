@@ -1,2 +1,2 @@
 clear
-wait
+/usr/local/bin/wait
