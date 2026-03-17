@@ -593,16 +593,16 @@ static void draw_finish(void) {
     #define YV FG_YELLOW
     #define R RESET
 
-    mv(r, lx); printf("      CloudTaser S3 Proxy vs Server-Side Encryption"); r++;
+    mv(r, lx); printf("        CloudTaser S3 Proxy vs Server-Side Encryption"); r++;
     mv(r, lx); printf(SEP); r++;
-    mv(r, lx); printf("|                     | SSE-S3 | SSE-KMS| SSE-C  | CloudTaser|"); r++;
+    mv(r, lx); printf("|                     | SSE-S3 |SSE-KMS | SSE-C  | CloudTaser|"); r++;
     mv(r, lx); printf(SEP); r++;
-    mv(r, lx); printf("| Provider sees data  |" RY "  YES   " R "|" RY "  YES  " R "|" YV " brief " R "|" GV "    NO    " R "|"); r++;
-    mv(r, lx); printf("| Key held by         |" RY "  AWS   " R "|" RY " AWS KMS" R "|" YV "You>AWS" R "|" GV " EU Vault " R "|"); r++;
-    mv(r, lx); printf("| CLOUD Act exposure  |" RY " full   " R "|" RY "  full  " R "|" YV " key   " R "|" GV "cipher only" R "|"); r++;
-    mv(r, lx); printf("| Code changes needed |" GV "  none  " R "|" YV " minor  " R "|" RY " major " R "|" GV " URL only  " R "|"); r++;
-    mv(r, lx); printf("| Per-object keys     |" GV "  yes   " R "|" YV "  opt   " R "|" RY "manual " R "|" GV "    yes    " R "|"); r++;
-    mv(r, lx); printf("| Key rotation        |" RY "  AWS   " R "|" YV " AWS KMS" R "|" RY "manual " R "|" GV " EU Vault  " R "|"); r++;
+    mv(r, lx); printf("| Provider sees data  |" RY "  YES   " R "|" RY "  YES   " R "|" YV " brief  " R "|" GV "    NO     " R "|"); r++;
+    mv(r, lx); printf("| Key held by         |" RY "  AWS   " R "|" RY " AWS KMS" R "|" YV "You>AWS " R "|" GV " EU Vault  " R "|"); r++;
+    mv(r, lx); printf("| CLOUD Act exposure  |" RY "  full  " R "|" RY "  full  " R "|" YV "  key   " R "|" GV "cipher only" R "|"); r++;
+    mv(r, lx); printf("| Code changes needed |" GV "  none  " R "|" YV " minor  " R "|" RY " major  " R "|" GV " URL only  " R "|"); r++;
+    mv(r, lx); printf("| Per-object keys     |" GV "  yes   " R "|" YV "  opt   " R "|" RY " manual " R "|" GV "    yes    " R "|"); r++;
+    mv(r, lx); printf("| Key rotation        |" RY "  AWS   " R "|" YV " AWS KMS" R "|" RY " manual " R "|" GV " EU Vault  " R "|"); r++;
     mv(r, lx); printf(SEP); r++;
 
     #undef SEP
