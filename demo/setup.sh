@@ -12,6 +12,11 @@ kubectl wait --for=condition=Ready node --all --timeout=300s
 
 echo "Setting up CloudTaser demo environment..."
 
+# Generate unique session ID for this demo instance
+SESSION_ID=$(cat /dev/urandom | tr -dc 'a-z0-9' | head -c 8)
+echo "$SESSION_ID" > /tmp/.session_id
+echo "Session ID: $SESSION_ID"
+
 # Get a scoped session token from the EU Vault (Frankfurt)
 echo "Requesting session token from EU Vault..."
 apt-get update -qq && apt-get install -y -qq jq > /dev/null 2>&1
@@ -24,14 +29,18 @@ if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
   echo "ERROR: Failed to get session token from EU Vault"
   exit 1
 fi
+echo "$SESSION_TOKEN" > /tmp/.cloudtaser-session-token
 echo "Session token acquired (1h TTL, scoped to demo paths)"
 
-# Write demo secrets to the EU Vault
-echo "Writing demo secrets to EU Vault..."
-curl -sf -X POST "$EU_VAULT/v1/secret/data/demo/postgres" \
+# Write demo secrets to session-scoped path in EU Vault
+echo "Writing demo secrets to EU Vault (session: $SESSION_ID)..."
+curl -sf -X POST "$EU_VAULT/v1/secret/data/demo/$SESSION_ID/postgres" \
   -H "X-Vault-Token: $SESSION_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"data": {"password": "CloudTaser-Demo-2026!", "username": "postgres"}}'
+
+# Template the postgres manifest with session-scoped path
+sed -i "s|secret/data/demo/postgres|secret/data/demo/$SESSION_ID/postgres|" /tmp/postgres-demo.yaml
 
 # Install CloudTaser from public GHCR chart
 helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \

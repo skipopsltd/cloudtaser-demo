@@ -1,6 +1,6 @@
 /*
  * CloudTaser Interactive Demo — Fullscreen TUI
- * Full-width layout, yellow output box, 4 steps
+ * Full-width layout, yellow output box, text input support, 5 steps
  * Cross-compile: x86_64-linux-musl-gcc -static -Os -s -o demo/assets/demo demo.c
  */
 #include <stdio.h>
@@ -123,6 +123,7 @@ typedef struct {
     const char *commands[6];
     const char *cmd_desc[6];
     const char *check;
+    const char *input_prompt; /* if non-NULL, show text input before commands */
 } Step;
 
 static Step steps[] = {
@@ -148,31 +149,59 @@ static Step steps[] = {
             "Inspect the injected command — wrapper wraps postgres",
             NULL
         },
-        "kubectl get pod postgres-demo -o jsonpath='{.status.phase}' | grep -q Running"
+        "kubectl get pod postgres-demo -o jsonpath='{.status.phase}' | grep -q Running",
+        NULL
     },
     {
-        "Verify: No Secrets in K8s, App Still Works",
+        "Set Your Own Secret Password",
         {
-            "Secrets never touch Kubernetes storage.",
-            "No K8s Secrets, no etcd — yet the app works.",
-            "The wrapper fetched them from EU Vault into memory.",
+            "Type any password you want below.",
+            "It goes to EU OpenBao vault in Frankfurt.",
+            "Verify at: https://secret.cloudtaser.io/ui",
+            "This is the LAST time you see it in plain text.",
+            NULL
+        },
+        {
+            "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" -H \"Content-Type: application/json\" -d \"{\\\"data\\\": {\\\"password\\\": \\\"$(cat /tmp/.user_password)\\\", \\\"username\\\": \\\"postgres\\\"}}\" && echo \"Secret updated in EU Vault (Frankfurt)\"",
+            "curl -sf \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" | python3 -c 'import sys,json; d=json.load(sys.stdin)[\"data\"][\"data\"]; print(\"Password in vault: \" + d[\"password\"])'",
+            "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; kubectl apply -f /tmp/postgres-demo.yaml",
+            "kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s",
+            NULL
+        },
+        {
+            "Write YOUR password to EU OpenBao vault (Frankfurt)",
+            "Read it back from vault — proof it's stored in EU",
+            "Recreate the pod to pick up the new secret",
+            "Wait for pod ready with your password",
+            NULL
+        },
+        "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1",
+        "Enter your secret password"
+    },
+    {
+        "Verify: No Secrets in K8s, YOUR Password Works",
+        {
+            "Your password never touched Kubernetes.",
+            "No K8s Secrets, no etcd — yet postgres connects.",
+            "The wrapper fetched it from EU Vault into memory.",
             NULL
         },
         {
             "kubectl get secrets -n default",
             "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get \"\" --prefix --keys-only | grep -i postgres_password || echo \"Not found in etcd - secrets are safe\"",
-            "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected successfully' as status;\"",
+            "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected with YOUR password' as status;\"",
             "kubectl logs postgres-demo -c postgres | grep -E \"secrets loaded|fetching|unsealed\"",
             NULL
         },
         {
             "List all secrets in the namespace — none for postgres",
             "Search etcd directly — no password stored anywhere",
-            "Connect to postgres — password works from memory",
+            "Connect to postgres — YOUR password works from memory",
             "Check wrapper logs — secrets fetched from EU Vault",
             NULL
         },
-        "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1"
+        "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1",
+        NULL
     },
     {
         "Block /proc/pid/environ Read",
@@ -193,7 +222,8 @@ static Step steps[] = {
             "Try to read process environment — eBPF blocks it",
             NULL
         },
-        "P=$(kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2) && cat /proc/$P/environ 2>/dev/null; test $? -ne 0"
+        "P=$(kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2) && cat /proc/$P/environ 2>/dev/null; test $? -ne 0",
+        NULL
     },
     {
         "View the Audit Trail",
@@ -211,10 +241,15 @@ static Step steps[] = {
             "View eBPF agent logs — every access attempt recorded",
             NULL
         },
-        "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 2>/dev/null | grep -qi environ"
+        "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 2>/dev/null | grep -qi environ",
+        NULL
     },
 };
 #define N_STEPS (int)(sizeof(steps) / sizeof(steps[0]))
+
+/* ── Text input ──────────────────────────────────────────────────── */
+#define MAX_INPUT 128
+static char user_input[MAX_INPUT];
 
 /* ── Branded title helper ────────────────────────────────────────── */
 static void draw_cloud_taser(int r, int c) {
@@ -246,7 +281,6 @@ static void draw_chrome(int step) {
     /* title row: CloudTaser branding + step title */
     int rr = 2;
     draw_cloud_taser(rr, 3);
-    /* "CloudTaser" is 10 visible chars but has ANSI escapes; place step info after gap */
     Step *s = &steps[step];
     char hdr[128];
     snprintf(hdr, sizeof(hdr), "Step %d/%d: %s", step + 1, N_STEPS, s->title);
@@ -273,27 +307,97 @@ static void draw_chrome(int step) {
     fflush(stdout);
 }
 
-/* ── Update dynamic area (command, output box, buttons). ──────────── */
-static void draw_dynamic(int step, int cmd, int ncmds, int btn,
-                         const char *output, int check_result, int running) {
+/* ── Draw input field for text input steps ────────────────────────── */
+static void draw_input(int step, const char *text, int cursor_pos) {
     get_size();
     int W = tw, H = th;
-    int rx = 3;          /* content left margin */
-    int rmx = W - 4;     /* max content width */
+    int rx = 3;
+    int rmx = W - 4;
 
-    /* find where dynamic area starts (after desc + divider) */
     Step *s = &steps[step];
-    int rr = 2 + 2; /* title + gap */
+    int rr = 2 + 2;
     for (int i = 0; s->desc[i] && rr < 9; i++) rr++;
-    rr += 2; /* gap + divider */
+    rr += 2;
 
-    /* clear dynamic area: from rr+1 to H-1 */
+    /* clear dynamic area */
     for (int r = rr + 1; r < H; r++) {
         mv(r, 2);
         for (int i = 0; i < W - 2; i++) putchar(' ');
         mv(r, W); putchar('|');
     }
-    /* restore bottom border */
+    mv(H, 1); putchar('+');
+    for (int i = 0; i < W - 2; i++) putchar('-');
+    putchar('+');
+
+    rr++;
+
+    /* prompt */
+    mv(rr, rx);
+    printf(FG_CYAN "%s:" RESET, s->input_prompt);
+    rr += 2;
+
+    /* input box */
+    int iw = rmx - 4;
+    if (iw > 60) iw = 60;
+    int ix = rx + 2;
+
+    mv(rr, ix);
+    printf(FG_YELLOW "+");
+    for (int i = 0; i < iw; i++) putchar('-');
+    printf("+" RESET);
+    rr++;
+
+    mv(rr, ix);
+    printf(FG_YELLOW "|" RESET " ");
+    int tlen = strlen(text);
+    int show = tlen > iw - 3 ? iw - 3 : tlen;
+    printf(BOLD FG_WHITE "%.*s" RESET, show, text);
+    /* cursor block */
+    printf(CSI "7m" " " RESET);
+    for (int i = show + 1; i < iw - 1; i++) putchar(' ');
+    printf(FG_YELLOW "|" RESET);
+    rr++;
+
+    mv(rr, ix);
+    printf(FG_YELLOW "+");
+    for (int i = 0; i < iw; i++) putchar('-');
+    printf("+" RESET);
+    rr += 2;
+
+    mv(rr, rx);
+    printf(DIM "Type your password, then press ENTER to continue" RESET);
+
+    /* restore progress bar */
+    mv(H - 1, 2);
+    int bar_w = W - 2;
+    int filled = ((step + 1) * bar_w) / (N_STEPS + 1);
+    for (int i = 0; i < bar_w; i++) {
+        if (i < filled) printf(BG_BLUE " " RESET);
+        else printf(DIM "." RESET);
+    }
+
+    fflush(stdout);
+}
+
+/* ── Update dynamic area (command, output box, buttons). ──────────── */
+static void draw_dynamic(int step, int cmd, int ncmds, int btn,
+                         const char *output, int check_result, int running) {
+    get_size();
+    int W = tw, H = th;
+    int rx = 3;
+    int rmx = W - 4;
+
+    Step *s = &steps[step];
+    int rr = 2 + 2;
+    for (int i = 0; s->desc[i] && rr < 9; i++) rr++;
+    rr += 2;
+
+    /* clear dynamic area */
+    for (int r = rr + 1; r < H; r++) {
+        mv(r, 2);
+        for (int i = 0; i < W - 2; i++) putchar(' ');
+        mv(r, W); putchar('|');
+    }
     mv(H, 1); putchar('+');
     for (int i = 0; i < W - 2; i++) putchar('-');
     putchar('+');
@@ -336,13 +440,11 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
         int ob_inner_w = ob_right - ob_left - 2;
         int ob_inner_h = ob_bot - ob_top - 1;
 
-        /* top border */
         mv(ob_top, ob_left);
         printf(FG_YELLOW "+");
         for (int i = 0; i < ob_right - ob_left - 1; i++) putchar('-');
         printf("+" RESET);
 
-        /* side borders + clear interior */
         for (int r = ob_top + 1; r < ob_bot; r++) {
             mv(r, ob_left);
             printf(FG_YELLOW "|" RESET);
@@ -350,17 +452,14 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
             printf(FG_YELLOW "|" RESET);
         }
 
-        /* bottom border */
         mv(ob_bot, ob_left);
         printf(FG_YELLOW "+");
         for (int i = 0; i < ob_right - ob_left - 1; i++) putchar('-');
         printf("+" RESET);
 
-        /* label on top border */
         mv(ob_top, ob_left + 2);
         printf(FG_YELLOW " Output " RESET);
 
-        /* content inside box */
         int cx = ob_left + 2;
         int cy = ob_top + 1;
 
@@ -467,25 +566,20 @@ static void draw_finish(void) {
     draw_cloud_taser(r, cx - 5); r += 2;
     mv(r, cx - 7); printf(BOLD FG_GREEN "Demo Complete!" RESET); r += 2;
 
-    /* content block — widest line is the table at 62 chars */
     int block_w = 62;
     int lx = (W - block_w) / 2;
     if (lx < 3) lx = 3;
 
-    /* bullet list — heading aligns with bullets */
     mv(r, lx); printf("You've seen CloudTaser in action:"); r += 2;
     mv(r, lx); printf("* Secrets never touch Kubernetes - no etcd, no K8s Secrets"); r++;
     mv(r, lx); printf("* Applications work normally - secrets available in memory"); r++;
     mv(r, lx); printf("* eBPF enforcement blocks /proc/environ at kernel level"); r++;
     mv(r, lx); printf("* Full audit trail - every event logged for compliance"); r += 2;
 
-    /* colored comparison table */
-    /* col widths (visible): label=21, K8s=6, ESO=6, Vault=7, CSI=6, CT=9 */
-    /* total: 21+6+6+7+6+9 + 7 borders = 62 */
     #define SEP "+---------------------+------+------+-------+------+---------+"
-    #define RY FG_RED                   /* red for bad values */
-    #define GV FG_GREEN                 /* green for good values */
-    #define YV FG_YELLOW                /* yellow for ambiguous */
+    #define RY FG_RED
+    #define GV FG_GREEN
+    #define YV FG_YELLOW
     #define R RESET
 
     mv(r, lx); printf("          CloudTaser vs Alternatives"); r++;
@@ -507,7 +601,6 @@ static void draw_finish(void) {
     #undef YV
     #undef R
 
-    /* links near the exit button */
     mv(H - 5, cx - 7); printf(FG_CYAN "cloudtaser.io" RESET);
     mv(H - 4, cx - 9); printf(DIM "cloud@skipops.ltd" RESET);
 
@@ -539,7 +632,6 @@ static void wait_for_setup(void) {
         fflush(stdout);
         frame++;
         usleep(200000);
-        /* need at least 15 frames (~3s) AND the file to exist */
         if (frame >= 15 && stat("/etc/kubernetes/admin.conf", &st) == 0) break;
     }
 
@@ -586,6 +678,8 @@ int main(void) {
     int check_result = -1;
     int need_chrome = 1;
     int dirty = 1;
+    int input_mode = 0;
+    int input_len = 0;
 
     while (step < N_STEPS) {
         Step *s = &steps[step];
@@ -596,14 +690,56 @@ int main(void) {
             draw_chrome(step);
             need_chrome = 0;
             dirty = 1;
+            /* enter input mode if step has input_prompt */
+            if (s->input_prompt && cmd == 0) {
+                input_mode = 1;
+                input_len = 0;
+                user_input[0] = '\0';
+            }
         }
+
+        if (input_mode) {
+            if (dirty) {
+                draw_input(step, user_input, input_len);
+                dirty = 0;
+            }
+
+            int key = readkey();
+            if (key == -1) continue;
+            if (key == 'q' && input_len == 0) { step = N_STEPS; break; }
+            if (key == 3) { step = N_STEPS; break; }
+
+            if (key == '\n' || key == '\r') {
+                if (input_len > 0) {
+                    /* save to file */
+                    FILE *f = fopen("/tmp/.user_password", "w");
+                    if (f) { fprintf(f, "%s", user_input); fclose(f); }
+                    input_mode = 0;
+                    dirty = 1;
+                }
+            } else if (key == 127 || key == 8) {
+                /* backspace */
+                if (input_len > 0) {
+                    input_len--;
+                    user_input[input_len] = '\0';
+                    dirty = 1;
+                }
+            } else if (key >= 32 && key < 127 && input_len < MAX_INPUT - 1) {
+                /* printable character */
+                user_input[input_len++] = (char)key;
+                user_input[input_len] = '\0';
+                dirty = 1;
+            }
+            continue;
+        }
+
         if (dirty) {
             draw_dynamic(step, cmd, ncmds, btn, output, check_result, 0);
             dirty = 0;
         }
 
         int key = readkey();
-        if (key == -1) continue; /* no input, don't redraw */
+        if (key == -1) continue;
         if (key == 'q' || key == 3) break;
 
         if (key == K_LEFT || key == K_RIGHT) {
@@ -620,7 +756,6 @@ int main(void) {
                 char cmd_out[MAX_OUT];
                 run_cmd(s->commands[cmd], cmd_out, MAX_OUT);
 
-                /* clear previous output — show only current command */
                 output[0] = '\0';
                 int olen = 0;
                 {
