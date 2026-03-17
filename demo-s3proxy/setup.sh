@@ -2,13 +2,16 @@
 # CloudTaser S3 Proxy Demo — Pre-setup script
 # Runs automatically in background during intro
 
-set -euo pipefail
+exec > /tmp/.setup-log 2>&1
+set -euxo pipefail
 
 EU_VAULT="https://secret.cloudtaser.io"
 PROVISIONER_TOKEN="demo-provisioner-v1"
 
 echo "Installing tools..."
-apt-get update -qq && apt-get install -y -qq awscli xxd jq > /dev/null 2>&1
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -qq
+apt-get install -y -qq awscli jq xxd
 
 # Configure AWS CLI for path-style addressing (MinIO compatible)
 mkdir -p /root/.aws
@@ -21,7 +24,7 @@ AWSCFG
 touch /tmp/.tools-installed
 
 # Pull S3 proxy image
-docker pull ghcr.io/skipopsltd/cloudtaser-s3-proxy:v0.2.2-amd64 > /dev/null 2>&1 &
+docker pull ghcr.io/skipopsltd/cloudtaser-s3-proxy:v0.2.2-amd64 &
 
 # Get a scoped session token from the EU Vault (Frankfurt)
 echo "Requesting session token from EU Vault..."

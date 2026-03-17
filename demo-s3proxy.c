@@ -626,47 +626,39 @@ static void wait_for_setup(void) {
     struct stat st;
     int frame = 0;
     const char spin[] = "|/-\\";
+    int tools_done = 0;
 
     printf(HIDE_CUR);
 
-    /* Phase 1: installing tools — show for at least 3 seconds */
-    for (;;) {
-        get_size();
-        int r = th / 2;
-        mv(r, 1);
-        for (int i = 0; i < tw; i++) putchar(' ');
-        int pad = (tw - 34) / 2;
-        if (pad < 1) pad = 1;
-        mv(r, pad);
-        printf(DIM "Installing tools... %c" RESET, spin[frame & 3]);
-        fflush(stdout);
-        frame++;
-        usleep(200000);
-        if (frame >= 15 && stat("/tmp/.tools-installed", &st) == 0) break;
-    }
-
-    /* Phase 2: wait for S3 proxy */
     while (stat("/tmp/.cloudtaser-setup-done", &st) != 0) {
         get_size();
         int r = th / 2;
         mv(r, 1);
         for (int i = 0; i < tw; i++) putchar(' ');
-        int pad = (tw - 34) / 2;
+        int pad = (tw - 40) / 2;
         if (pad < 1) pad = 1;
         mv(r, pad);
-        draw_cloud_taser(r, pad);
-        printf(BOLD FG_WHITE " S3 Proxy starting %c" RESET, spin[frame & 3]);
+
+        if (!tools_done && stat("/tmp/.tools-installed", &st) == 0)
+            tools_done = 1;
+
+        if (tools_done) {
+            draw_cloud_taser(r, pad);
+            printf(BOLD FG_WHITE " S3 Proxy starting %c" RESET, spin[frame & 3]);
+        } else {
+            printf(DIM "Setting up environment... %c" RESET, spin[frame & 3]);
+        }
+
         fflush(stdout);
         frame++;
-        usleep(120000);
+        usleep(150000);
     }
 
-    /* done */
     get_size();
     int r = th / 2;
     mv(r, 1);
     for (int i = 0; i < tw; i++) putchar(' ');
-    int pad = (tw - 34) / 2;
+    int pad = (tw - 40) / 2;
     if (pad < 1) pad = 1;
     draw_cloud_taser(r, pad);
     printf(BOLD FG_GREEN " S3 Proxy Ready" RESET);
