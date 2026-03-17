@@ -10,8 +10,8 @@
     "steps": [],
     "assets": {
       "host01": [
-        {"file": "assets/confidential-report.txt", "target": "/tmp/"},
-        {"file": "assets/demo", "target": "/usr/local/bin/", "chmod": "+x"}
+        {"file": "confidential-report.txt", "target": "/tmp/"},
+        {"file": "demo", "target": "/usr/local/bin/", "chmod": "+x"}
       ]
     }
   },
