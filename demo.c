@@ -566,11 +566,9 @@ int main(void) {
                 char cmd_out[MAX_OUT];
                 run_cmd(s->commands[cmd], cmd_out, MAX_OUT);
 
-                int olen = strlen(output);
-                if (olen > 0 && olen < MAX_OUT - 2) {
-                    output[olen++] = '\n';
-                    output[olen] = '\0';
-                }
+                /* clear previous output — show only current command */
+                output[0] = '\0';
+                int olen = 0;
                 {
                     const char *c = s->commands[cmd];
                     const char *nl = strchr(c, '\n');
