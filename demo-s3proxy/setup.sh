@@ -11,7 +11,12 @@ PROVISIONER_TOKEN="demo-provisioner-v1"
 echo "Installing tools..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq awscli jq xxd
+apt-get install -y -qq jq xxd unzip
+
+# AWS CLI v2 — official installer (awscli apt package unavailable on newer Ubuntu)
+curl -sf "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip -qo /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
 
 # Configure AWS CLI for path-style addressing (MinIO compatible)
 mkdir -p /root/.aws
