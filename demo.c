@@ -186,7 +186,7 @@ static Step steps[] = {
         {
             "Type any password you want below.",
             "It goes to EU OpenBao vault in Frankfurt.",
-            "This is the LAST time you see it in plain text.",
+            "Visible only in this demo — never stored in the cluster.",
             NULL
         },
         {
@@ -218,14 +218,14 @@ static Step steps[] = {
             "kubectl get secrets -n default",
             "kubectl exec -n kube-system etcd-controlplane -- etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get \"\" --prefix --keys-only | grep -i postgres_password || echo \"Not found in etcd - secrets are safe\"",
             "kubectl exec postgres-demo -- bash -c 'echo \"POSTGRES_PASSWORD=$POSTGRES_PASSWORD\"' || true",
-            "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected with YOUR password' as status;\"",
+            "echo \"Connecting with password: $(cat /tmp/.user_password)\" && kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\"",
             NULL
         },
         {
             "List all secrets — none for postgres",
             "Search etcd directly — not there either",
             "Try to read password via exec — EMPTY, not in env",
-            "Yet postgres connects — secret is in process memory only",
+            "Connect with YOUR password — same one, highlighted",
             NULL
         },
         "kubectl exec postgres-demo -- psql -U postgres -c 'SELECT 1' > /dev/null 2>&1",
