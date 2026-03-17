@@ -35,7 +35,7 @@ curl -sf -X POST "$EU_VAULT/v1/secret/data/demo/postgres" \
 
 # Install CloudTaser from public GHCR chart
 helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \
-  --version 0.1.18 \
+  --version 0.1.19 \
   --namespace cloudtaser-system --create-namespace \
   -f /tmp/values-demo.yaml \
   --wait --timeout=180s
