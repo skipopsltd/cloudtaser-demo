@@ -16,10 +16,24 @@ You've seen CloudTaser in action:
 | Cloud provider can read secrets | No | Yes | Yes | Yes |
 | CLOUD Act / FISA 702 resistant | Yes | No | No | No |
 
+## 🔍 Try to find the password yourself
+
+The terminal is still live — you're welcome to explore the cluster and try to find the `POSTGRES_PASSWORD`. Go ahead:
+
+```
+kubectl get secrets -A
+kubectl describe pod postgres-demo
+kubectl get pod postgres-demo -o yaml | grep -i password
+cat /proc/*/environ 2>/dev/null | strings | grep POSTGRES
+etcdctl get "" --prefix --keys-only | grep -i password
+```
+
+You shouldn't be able to find it anywhere in the infrastructure — because it only exists in process memory, fetched directly from the EU vault. The password never touched Kubernetes Secrets, etcd, disk, or the pod spec.
+
 ## Next Steps
 
 Ready to protect your infrastructure?
 
 **Learn more:** [cloudtaser.io](https://cloudtaser.io)
 
-**Contact us:** cloud@skipops.ltd
+**Contact us:** [hello@cloudtaser.io](mailto:hello@cloudtaser.io)
