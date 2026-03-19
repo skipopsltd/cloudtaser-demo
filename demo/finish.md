@@ -24,7 +24,7 @@ The terminal is still live — you're welcome to explore the cluster and try to 
 kubectl get secrets -A
 kubectl describe pod postgres-demo
 kubectl get pod postgres-demo -o yaml | grep -i password
-cat /proc/*/environ 2>/dev/null | strings | grep POSTGRES
+sudo cat /proc/*/environ 2>/dev/null | strings | grep POSTGRES
 etcdctl get "" --prefix --keys-only | grep -i password
 ```
 
