@@ -456,7 +456,10 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
 
     rr++;
 
-    /* command info */
+    /* command info — fixed 5-line area */
+    int cmd_area_top = rr;
+    int CMD_AREA_H = 5;
+
     mv(rr, rx);
     if (cmd < ncmds) {
         printf(FG_YELLOW "Command %d/%d:" RESET, cmd + 1, ncmds);
@@ -472,16 +475,27 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
         mv(rr, rx);
         printf(BOLD "$ " RESET);
         const char *c = s->commands[cmd];
-        const char *nl = strchr(c, '\n');
-        int show = nl ? (int)(nl - c) : (int)strlen(c);
-        if (show > rmx - 3) show = rmx - 3;
-        printf(FG_WHITE "%.*s" RESET, show, c);
-        if (nl || (int)strlen(c) > show) {
-            rr++;
-            mv(rr, rx + 2); printf(DIM "(...)" RESET);
+        int clen = (int)strlen(c);
+        int line_w = rmx - rx - 2;
+        int pos = 0;
+        int cmd_line = 0;
+        while (pos < clen && cmd_line < CMD_AREA_H - 2) {
+            int chunk = clen - pos;
+            if (chunk > line_w) chunk = line_w;
+            if (pos == 0) {
+                printf(FG_WHITE "%.*s" RESET, chunk, c + pos);
+            } else {
+                rr++;
+                cmd_line++;
+                mv(rr, rx + 2);
+                printf(FG_WHITE "%.*s" RESET, chunk, c + pos);
+            }
+            pos += chunk;
         }
     }
-    rr += 2;
+
+    /* Always position output box at a fixed row */
+    rr = cmd_area_top + CMD_AREA_H + 1;
 
     /* output box with yellow border */
     {
@@ -654,7 +668,7 @@ static void draw_finish(void) {
     #undef R
 
     mv(H - 5, cx - 7); printf(FG_CYAN "cloudtaser.io" RESET);
-    mv(H - 4, cx - 9); printf(DIM "cloud@skipops.ltd" RESET);
+    mv(H - 4, cx - 11); printf(DIM "hello@cloudtaser.io" RESET);
 
     mv(H - 2, cx - 6);
     printf(BOLD BG_GREEN FG_WHITE " [ EXIT ] " RESET);
@@ -812,13 +826,10 @@ int main(void) {
                 int olen = 0;
                 {
                     const char *c = s->commands[cmd];
-                    const char *nl = strchr(c, '\n');
-                    int show = nl ? (int)(nl - c) : (int)strlen(c);
-                    if (show > 60) show = 60;
+                    int clen = (int)strlen(c);
                     int space = MAX_OUT - 1 - olen;
-                    int wrote = snprintf(output + olen, space, "$ %.*s%s\n",
-                                         show, c,
-                                         (nl || (int)strlen(c) > 60) ? "..." : "");
+                    int wrote = snprintf(output + olen, space, "$ %.*s\n",
+                                         clen, c);
                     if (wrote > 0 && wrote < space) olen += wrote;
                 }
                 {
