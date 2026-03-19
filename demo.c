@@ -523,7 +523,7 @@ static void draw_dynamic(int step, int cmd, int ncmds,
         } else if (running) {
             mv(cy, cx); printf(DIM "Running..." RESET);
         } else {
-            mv(cy, cx); printf(DIM "(press ENTER to run)" RESET);
+            mv(cy, cx); printf(DIM "(press ENTER to continue)" RESET);
         }
     }
 
