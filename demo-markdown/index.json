@@ -1,0 +1,40 @@
+{
+  "title": "CloudTaser: EU Data Sovereignty on US Cloud",
+  "description": "See how CloudTaser keeps your secrets out of Kubernetes etcd and blocks /proc/environ reads — all while running on US cloud infrastructure.",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "background": "setup.sh"
+    },
+    "steps": [
+      { "title": "Install CloudTaser", "text": "step1.md" },
+      { "title": "Deploy Protected PostgreSQL", "text": "step2.md" },
+      { "title": "Set Your Secret Password", "text": "step3.md" },
+      { "title": "Inspect Wrapper Injection", "text": "step4.md" },
+      { "title": "Verify: No Secrets in K8s", "text": "step5.md" },
+      { "title": "eBPF Blocks /proc/environ", "text": "step6.md" },
+      { "title": "Summary & Comparison", "text": "step7.md" }
+    ],
+    "finish": {
+      "text": "finish.md"
+    },
+    "assets": {
+      "host01": [
+        { "file": "values-demo.yaml", "target": "/tmp/" },
+        { "file": "postgres-demo.yaml", "target": "/tmp/" },
+        { "file": "helpers.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step1.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step2.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step3.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step4.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step5.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step6.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step7.sh", "target": "/tmp/", "chmod": "+x" }
+      ]
+    }
+  },
+  "backend": {
+    "imageid": "kubernetes-kubeadm-1node"
+  },
+  "time": "15"
+}
