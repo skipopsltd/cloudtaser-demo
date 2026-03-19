@@ -1,6 +1,6 @@
 # Try to Read /proc/pid/environ
 
-This is the key security moment. On a normal Kubernetes node, anyone with host access can read a process's environment variables via `/proc/<pid>/environ`. CloudTaser's eBPF agent **blocks this at the kernel level**.
+This is the key security moment. On a normal Kubernetes node, even root can freely read a process's environment variables via `/proc/<pid>/environ`. CloudTaser's eBPF agent **blocks this at the kernel level — even for root**.
 
 **Find the protected process's host PID:**
 
@@ -20,12 +20,12 @@ for line in sys.stdin:
 echo "Protected host PID: $PROTECTED_PID"
 ```
 
-**Attempt to read the environment from the host:**
+**Attempt to read the environment as root:**
 
 ```bash
-cat /proc/${PROTECTED_PID}/environ 2>&1; echo "Exit code: $?"
+sudo cat /proc/${PROTECTED_PID}/environ 2>&1; echo "Exit code: $?"
 ```
 
-You should see **"Permission denied"** — the eBPF kprobe intercepted the `openat` syscall and returned `-EACCES` *before any data was read*. This is synchronous kernel-level enforcement, not a race condition.
+You should see **"Permission denied"** — even as root. The eBPF kprobe intercepted the `openat` syscall and returned `-EACCES` *before any data was read*. This is synchronous kernel-level enforcement, not a race condition.
 
 The access attempt is **recorded in the audit trail** — which is what compliance frameworks (GDPR, NIS2, DORA) require.

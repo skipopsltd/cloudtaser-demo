@@ -59,9 +59,6 @@ static void raw_off(void) {
     fflush(stdout);
 }
 
-#define K_LEFT  1000
-#define K_RIGHT 1001
-
 static int readkey(void) {
     unsigned char c;
     if (read(STDIN_FILENO, &c, 1) != 1) return -1;
@@ -69,10 +66,6 @@ static int readkey(void) {
         unsigned char seq[2];
         if (read(STDIN_FILENO, &seq[0], 1) != 1) return 27;
         if (read(STDIN_FILENO, &seq[1], 1) != 1) return 27;
-        if (seq[0] == '[') {
-            if (seq[1] == 'D') return K_LEFT;
-            if (seq[1] == 'C') return K_RIGHT;
-        }
         return 27;
     }
     return c;
@@ -216,7 +209,7 @@ static Step steps[] = {
         {
             "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" -H \"Content-Type: application/json\" -d \"{\\\"data\\\": {\\\"password\\\": \\\"__PASSWORD__\\\", \\\"username\\\": \\\"postgres\\\"}}\" && echo \"Secret updated in EU Vault (Frankfurt)\"",
             "curl -sf \"https://secret.cloudtaser.io/v1/secret/data/demo/$(cat /tmp/.session_id)/postgres\" -H \"X-Vault-Token: $(cat /tmp/.cloudtaser-session-token)\" | python3 -c 'import sys,json; d=json.load(sys.stdin)[\"data\"][\"data\"]; print(\"Password in vault: \" + d[\"password\"])'",
-            "echo \"=== See for yourself ===\" && echo -e \"URL:   \\033[44;97m https://secret.cloudtaser.io/ui \\033[0m\" && echo \"Path:  demo/$(cat /tmp/.session_id)/postgres\" && echo \"Token: $(cat /tmp/.cloudtaser-session-token)\"",
+            "echo \"=== See for yourself ===\" && echo -e \"Link:  \\033[44;97m https://secret.cloudtaser.io/ui/vault/secrets/secret/show/demo/$(cat /tmp/.session_id)/postgres \\033[0m\" && echo \"Token: $(cat /tmp/.cloudtaser-session-token)\"",
             "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; kubectl apply -f /tmp/postgres-demo.yaml && kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s",
             NULL
         },
@@ -258,23 +251,23 @@ static Step steps[] = {
     {
         "Block /proc/pid/environ Read",
         {
-            "On a normal K8s node, anyone with host access can",
-            "read env vars via /proc/<pid>/environ.",
+            "On a normal K8s node, root can freely read env vars",
+            "via /proc/<pid>/environ.",
             "CloudTaser's eBPF kprobe blocks this at kernel level.",
-            "The openat syscall returns -EACCES. Zero leakage.",
+            "Even root gets -EACCES. Zero leakage.",
             NULL
         },
         {
             "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2 | tee /tmp/.protected_pid | xargs -I{} echo \"Protected PID: {}\"",
-            "cat /proc/$(cat /tmp/.protected_pid)/environ 2>&1; echo \"Exit code: $?\"",
+            "sudo cat /proc/$(cat /tmp/.protected_pid)/environ 2>&1; echo \"Exit code: $?\"",
             NULL
         },
         {
             "Find the protected process PID on the host",
-            "Try to read process environment — eBPF blocks it",
+            "Try as root to read process environment — eBPF blocks it",
             NULL
         },
-        "P=$(kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2) && cat /proc/$P/environ 2>/dev/null; test $? -ne 0",
+        "P=$(kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2) && sudo cat /proc/$P/environ 2>/dev/null; test $? -ne 0",
         NULL
     },
     {
@@ -432,7 +425,7 @@ static void draw_input(int step, const char *text, int cursor_pos) {
 }
 
 /* ── Update dynamic area (command, output box, buttons). ──────────── */
-static void draw_dynamic(int step, int cmd, int ncmds, int btn,
+static void draw_dynamic(int step, int cmd, int ncmds,
                          const char *output, int check_result, int running) {
     get_size();
     int W = tw, H = th;
@@ -456,32 +449,20 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
 
     rr++;
 
-    /* command info */
-    mv(rr, rx);
-    if (cmd < ncmds) {
-        printf(FG_YELLOW "Command %d/%d:" RESET, cmd + 1, ncmds);
-        if (s->cmd_desc[cmd]) {
-            printf(" %.*s", rmx - 16, s->cmd_desc[cmd]);
+    /* command checklist */
+    for (int i = 0; i < ncmds; i++) {
+        mv(rr, rx);
+        const char *desc = s->cmd_desc[i] ? s->cmd_desc[i] : "...";
+        if (i < cmd) {
+            printf(FG_GREEN "  * " RESET "%.*s", rmx - 7, desc);
+        } else if (i == cmd && running) {
+            printf(FG_YELLOW " >> " RESET BOLD "%.*s" RESET, rmx - 7, desc);
+        } else {
+            printf(DIM "    %.*s" RESET, rmx - 7, desc);
         }
-    } else {
-        printf(FG_GREEN "All commands completed" RESET);
+        rr++;
     }
     rr++;
-
-    if (cmd < ncmds) {
-        mv(rr, rx);
-        printf(BOLD "$ " RESET);
-        const char *c = s->commands[cmd];
-        const char *nl = strchr(c, '\n');
-        int show = nl ? (int)(nl - c) : (int)strlen(c);
-        if (show > rmx - 3) show = rmx - 3;
-        printf(FG_WHITE "%.*s" RESET, show, c);
-        if (nl || (int)strlen(c) > show) {
-            rr++;
-            mv(rr, rx + 2); printf(DIM "(...)" RESET);
-        }
-    }
-    rr += 2;
 
     /* output box with yellow border */
     {
@@ -515,9 +496,7 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
         int cx = ob_left + 2;
         int cy = ob_top + 1;
 
-        if (running) {
-            mv(cy, cx); printf(DIM "Running..." RESET);
-        } else if (output && output[0]) {
+        if (output && output[0]) {
             int out_max = ob_inner_h;
             if (out_max < 2) out_max = 2;
             const char *p = output;
@@ -541,8 +520,10 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
                 p = eol ? eol + 1 : p + llen;
                 if (!eol) break;
             }
+        } else if (running) {
+            mv(cy, cx); printf(DIM "Running..." RESET);
         } else {
-            mv(cy, cx); printf(DIM "(waiting for command)" RESET);
+            mv(cy, cx); printf(DIM "(press ENTER to continue)" RESET);
         }
     }
 
@@ -555,35 +536,17 @@ static void draw_dynamic(int step, int cmd, int ncmds, int btn,
             printf(BOLD FG_RED "Result: CHECK FAILED" RESET);
     }
 
-    /* buttons */
+    /* next button */
     {
         int br = H - 2;
         int center = W / 2;
-        int run_col = center - 14;
-        int next_col = center + 2;
-
-        mv(br, run_col);
-        if (cmd < ncmds) {
-            if (btn == 0)
-                printf(BOLD BG_GREEN FG_WHITE " [ RUN ] " RESET);
-            else
-                printf(BOLD FG_GREEN " [ RUN ] " RESET);
-        } else {
-            printf(DIM FG_GRAY " [ RUN ] " RESET);
-        }
-
-        mv(br, next_col);
-        if (cmd >= ncmds) {
-            if (btn == 1)
-                printf(BOLD BG_GREEN FG_WHITE " [ NEXT >> ] " RESET);
-            else
-                printf(BOLD FG_GREEN " [ NEXT >> ] " RESET);
-        } else {
-            printf(DIM FG_GRAY " [ NEXT >> ] " RESET);
-        }
-
-        mv(br + 1, center - 10);
-        printf(DIM "< > arrows   ENTER confirm" RESET);
+        mv(br, center - 7);
+        if (cmd >= ncmds && step + 1 >= N_STEPS)
+            printf(BOLD BG_GREEN FG_WHITE " [ FINISH ] " RESET);
+        else
+            printf(BOLD BG_GREEN FG_WHITE " [  NEXT >  ] " RESET);
+        mv(br, center + 9);
+        printf(DIM "ENTER" RESET);
     }
 
     /* re-draw progress */
@@ -654,12 +617,12 @@ static void draw_finish(void) {
     #undef R
 
     mv(H - 5, cx - 7); printf(FG_CYAN "cloudtaser.io" RESET);
-    mv(H - 4, cx - 9); printf(DIM "cloud@skipops.ltd" RESET);
+    mv(H - 4, cx - 11); printf(DIM "hello@cloudtaser.io" RESET);
 
     mv(H - 2, cx - 6);
     printf(BOLD BG_GREEN FG_WHITE " [ EXIT ] " RESET);
-    mv(H - 1, cx - 13);
-    printf(DIM "Press ENTER or 'q' to exit" RESET);
+    mv(H - 1, cx - 10);
+    printf(DIM "Press ENTER to exit" RESET);
     fflush(stdout);
 }
 
@@ -726,7 +689,6 @@ int main(void) {
     int step = 0;
     char output[MAX_OUT] = "";
     int cmd = 0;
-    int btn = 0;
     int check_result = -1;
     int need_chrome = 1;
     int dirty = 1;
@@ -758,8 +720,7 @@ int main(void) {
 
             int key = readkey();
             if (key == -1) continue;
-            if (key == 'q' && input_len == 0) { step = N_STEPS; break; }
-            if (key == 3) { step = N_STEPS; break; }
+
 
             if (key == '\n' || key == '\r') {
                 if (input_len > 0) {
@@ -783,67 +744,55 @@ int main(void) {
         }
 
         if (dirty) {
-            draw_dynamic(step, cmd, ncmds, btn, output, check_result, 0);
+            draw_dynamic(step, cmd, ncmds, output, check_result, 0);
             dirty = 0;
         }
 
         int key = readkey();
         if (key == -1) continue;
-        if (key == 'q' || key == 3) break;
-
-        if (key == K_LEFT || key == K_RIGHT) {
-            if (cmd < ncmds) btn = 0;
-            else if (cmd >= ncmds) btn = 1;
-            dirty = 1;
-            continue;
-        }
 
         if (key == '\n' || key == '\r') {
-            if (btn == 0 && cmd < ncmds) {
-                draw_dynamic(step, cmd, ncmds, btn, output, check_result, 1);
-
-                char expanded[MAX_CMD];
-                expand_cmd(s->commands[cmd], expanded, MAX_CMD, user_input);
-
-                char cmd_out[MAX_OUT];
-                run_cmd(expanded, cmd_out, MAX_OUT);
-
+            if (cmd < ncmds) {
+                /* auto-run all commands for this step */
                 output[0] = '\0';
-                int olen = 0;
-                {
-                    const char *c = s->commands[cmd];
-                    const char *nl = strchr(c, '\n');
-                    int show = nl ? (int)(nl - c) : (int)strlen(c);
-                    if (show > 60) show = 60;
-                    int space = MAX_OUT - 1 - olen;
-                    int wrote = snprintf(output + olen, space, "$ %.*s%s\n",
-                                         show, c,
-                                         (nl || (int)strlen(c) > 60) ? "..." : "");
-                    if (wrote > 0 && wrote < space) olen += wrote;
-                }
-                {
-                    int clen = strlen(cmd_out);
-                    int space = MAX_OUT - 1 - olen;
-                    if (clen > space) clen = space;
-                    memcpy(output + olen, cmd_out, clen);
-                    output[olen + clen] = '\0';
-                }
+                while (cmd < ncmds) {
+                    draw_dynamic(step, cmd, ncmds, output, check_result, 1);
 
-                cmd++;
-                if (cmd >= ncmds) {
-                    btn = 1;
-                    if (s->check) {
-                        char chk[256];
-                        check_result = run_cmd(s->check, chk, sizeof(chk));
-                    } else {
-                        check_result = 0;
+                    char expanded[MAX_CMD];
+                    expand_cmd(s->commands[cmd], expanded, MAX_CMD, user_input);
+
+                    char cmd_out[MAX_OUT];
+                    run_cmd(expanded, cmd_out, MAX_OUT);
+
+                    /* append description header + output */
+                    int olen = strlen(output);
+                    {
+                        const char *desc = s->cmd_desc[cmd] ? s->cmd_desc[cmd] : "...";
+                        int space = MAX_OUT - 1 - olen;
+                        int wrote = snprintf(output + olen, space, "> %s\n", desc);
+                        if (wrote > 0 && wrote < space) olen += wrote;
                     }
+                    {
+                        int clen = strlen(cmd_out);
+                        int space = MAX_OUT - 1 - olen;
+                        if (clen > space) clen = space;
+                        memcpy(output + olen, cmd_out, clen);
+                        olen += clen;
+                        output[olen] = '\0';
+                    }
+
+                    cmd++;
+                }
+                if (s->check) {
+                    char chk[256];
+                    check_result = run_cmd(s->check, chk, sizeof(chk));
+                } else {
+                    check_result = 0;
                 }
                 dirty = 1;
-            } else if (btn == 1 && cmd >= ncmds) {
+            } else {
                 step++;
                 cmd = 0;
-                btn = 0;
                 output[0] = '\0';
                 check_result = -1;
                 need_chrome = 1;
@@ -856,7 +805,7 @@ int main(void) {
         draw_finish();
         while (1) {
             int key = readkey();
-            if (key == '\n' || key == '\r' || key == 'q' || key == 3)
+            if (key == '\n' || key == '\r')
                 break;
             usleep(100000);
         }
