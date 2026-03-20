@@ -3,7 +3,7 @@
 source /tmp/helpers.sh
 step_guard 2
 
-header "Step 2/7: Deploy PostgreSQL (Traditional Way)"
+header "Step 2/8: Deploy PostgreSQL (Traditional Way)"
 
 info "First, let's deploy PostgreSQL the way most teams do it today:"
 info "store the password in a Kubernetes Secret and reference it from the pod."

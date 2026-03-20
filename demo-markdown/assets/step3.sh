@@ -3,7 +3,7 @@
 source /tmp/helpers.sh
 step_guard 3
 
-header "Step 3/7: The Problem — Secrets Are Everywhere"
+header "Step 3/8: The Problem — Secrets Are Everywhere"
 
 USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
 
