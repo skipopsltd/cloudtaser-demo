@@ -59,6 +59,21 @@ step_guard() {
     trap "touch $marker" EXIT
 }
 
+wait_for_postgres() {
+    local max=30
+    local i=0
+    printf "  %sWaiting for PostgreSQL to accept connections...%s" "$DIM" "$RESET"
+    while ! kubectl exec postgres-demo -- psql -U postgres -c "SELECT 1" &>/dev/null; do
+        i=$((i+1))
+        if [ $i -ge $max ]; then
+            printf "\n  %sPostgreSQL did not become ready in time.%s\n" "$RED" "$RESET"
+            return 1
+        fi
+        sleep 2
+    done
+    printf " %sready.%s\n\n" "$GREEN" "$RESET"
+}
+
 wait_for_setup() {
     local spin='|/-\'
     local i=0

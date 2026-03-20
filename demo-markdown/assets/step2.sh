@@ -43,6 +43,8 @@ run_cmd "kubectl apply -f /tmp/postgres-traditional.yaml"
 
 run_cmd "kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s"
 
+wait_for_postgres
+
 section "Verify it works and write a record"
 
 run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \\
