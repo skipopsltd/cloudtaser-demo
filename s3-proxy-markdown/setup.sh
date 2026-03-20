@@ -13,8 +13,13 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq jq xxd
 
-# MinIO Client
-curl -sf https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+# MinIO Client (with timeout and retry)
+for attempt in 1 2 3; do
+  curl -sfL --connect-timeout 10 --max-time 60 \
+    https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc && break
+  echo "mc download attempt $attempt failed, retrying..."
+  sleep 2
+done
 chmod +x /usr/local/bin/mc
 
 # Pull S3 proxy image
