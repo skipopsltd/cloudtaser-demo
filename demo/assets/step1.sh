@@ -9,7 +9,7 @@ header "Step 1/8: Install CloudTaser"
 section "Install operator + eBPF daemonset"
 
 run_cmd "helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \\
-  --version 0.1.20 \\
+  --version 0.3.0 \\
   --namespace cloudtaser-system --create-namespace \\
   -f /tmp/values-demo.yaml \\
   --wait --timeout=180s"
