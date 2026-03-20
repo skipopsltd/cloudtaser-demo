@@ -63,7 +63,7 @@ wait_for_setup() {
     local spin='|/-\'
     local i=0
     while [ ! -f /tmp/.cloudtaser-setup-done ]; do
-        printf "\r  %sWaiting for environment setup... %s%s" "$DIM" "${spin:i++%4:1}" "$RESET"
+        printf "\r  %sWaiting for environment to become ready... %s%s" "$DIM" "${spin:i++%4:1}" "$RESET"
         sleep 0.2
     done
     printf "\r  %sEnvironment ready.                %s\n\n" "$GREEN" "$RESET"
