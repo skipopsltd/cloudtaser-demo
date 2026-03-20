@@ -7,7 +7,7 @@ operator:
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-operator
     tag: "v0.4.15-amd64"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   resources:
     requests:
       cpu: 50m
@@ -35,7 +35,7 @@ ebpf:
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-ebpf
     tag: "v0.1.10-amd64"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   enforceMode: true
   logAll: false
   reactiveKill: true
