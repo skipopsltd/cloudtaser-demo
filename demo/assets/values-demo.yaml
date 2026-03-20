@@ -3,10 +3,9 @@ namespace: cloudtaser-system
 imagePullSecrets: []
 
 operator:
-  replicaCount: 1
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-operator
-    tag: "v0.4.15-amd64"
+    tag: "v0.4.18-amd64"
     pullPolicy: IfNotPresent
   resources:
     requests:
@@ -23,7 +22,7 @@ operator:
 wrapper:
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-wrapper
-    tag: "v0.0.12-amd64"
+    tag: "v0.0.14-amd64"
 
 s3proxy:
   image:
@@ -34,7 +33,7 @@ ebpf:
   enabled: true
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-ebpf
-    tag: "v0.1.10-amd64"
+    tag: "v0.1.12-amd64"
     pullPolicy: IfNotPresent
   enforceMode: true
   logAll: false
