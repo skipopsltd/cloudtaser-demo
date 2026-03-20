@@ -1,6 +1,6 @@
-# eBPF Blocks /proc/environ
+# eBPF Runtime Enforcement
 
-In step 3 you could read the password from /proc. Now watch eBPF block it — even as root.
+In step 3 you could read the password from /proc. Now eBPF blocks /proc/environ, /proc/mem, and ptrace — even as root.
 
 Run in the terminal:
 

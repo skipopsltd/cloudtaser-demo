@@ -1,5 +1,5 @@
 #!/bin/bash
-# Step 7: eBPF blocks /proc/environ, show audit trail
+# Step 7: eBPF blocks /proc/environ, /proc/mem, ptrace — show audit trail
 source /tmp/helpers.sh
 step_guard 7
 
@@ -14,20 +14,28 @@ run_cmd "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 \\
   | tee /tmp/.protected_pid \\
   | xargs -I{} echo \"Protected PID: {}\""
 
-section "Try to read /proc/PID/environ as root"
-
 PROTECTED_PID=$(cat /tmp/.protected_pid)
+
+section "1. /proc/PID/environ — blocked"
 
 run_cmd "sudo cat /proc/${PROTECTED_PID}/environ 2>&1; echo \"Exit code: \$?\""
 
-info "Permission denied. eBPF kprobe returned -EACCES before any data was read."
+section "2. /proc/PID/mem — blocked"
+
+run_cmd "sudo cat /proc/${PROTECTED_PID}/mem 2>&1; echo \"Exit code: \$?\""
+
+section "3. ptrace attach — blocked"
+
+run_cmd "sudo strace -p ${PROTECTED_PID} -e trace=none -o /dev/null 2>&1; echo \"Exit code: \$?\""
+
+info "All three blocked. eBPF kprobes return -EACCES/-EPERM at kernel level."
 
 pause
 
 section "Audit trail"
 
 run_cmd "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 \\
-  | grep -E \"ENVIRON|blocked\""
+  | grep -E \"ENVIRON|PROCMEM|PTRACE|blocked\""
 
 info "Every attempt is logged. Events forward to SIEM for GDPR/NIS2/DORA compliance."
 
