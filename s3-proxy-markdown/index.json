@@ -1,0 +1,34 @@
+{
+  "title": "CloudTaser S3 Proxy: Client-Side Encryption",
+  "description": "Encrypt data before it reaches the cloud — the provider never sees your plaintext. Keys stay in EU-hosted vault.",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "background": "setup.sh"
+    },
+    "steps": [
+      { "title": "The Confidential File", "text": "step1.md" },
+      { "title": "Upload Through Proxy", "text": "step2.md" },
+      { "title": "What the Cloud Sees", "text": "step3.md" },
+      { "title": "Download Through Proxy", "text": "step4.md" },
+      { "title": "Summary & Comparison", "text": "step5.md" }
+    ],
+    "finish": {
+      "text": "finish.md"
+    },
+    "assets": {
+      "host01": [
+        { "file": "confidential-report.txt", "target": "/tmp/" },
+        { "file": "helpers.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step1.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step2.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step3.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step4.sh", "target": "/tmp/", "chmod": "+x" },
+        { "file": "step5.sh", "target": "/tmp/", "chmod": "+x" }
+      ]
+    }
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  }
+}
