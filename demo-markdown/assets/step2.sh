@@ -1,6 +1,7 @@
 #!/bin/bash
 # Step 2: Deploy PostgreSQL the traditional way with a K8s Secret
 source /tmp/helpers.sh
+step_guard 2
 
 header "Step 2/7: Deploy PostgreSQL (Traditional Way)"
 

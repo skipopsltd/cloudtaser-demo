@@ -1,6 +1,7 @@
 #!/bin/bash
 # Step 6: eBPF blocks /proc/environ, show audit trail
 source /tmp/helpers.sh
+step_guard 6
 
 header "Step 6/7: eBPF Runtime Enforcement"
 

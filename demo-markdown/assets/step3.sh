@@ -1,6 +1,7 @@
 #!/bin/bash
 # Step 3: Show the problem — secrets visible everywhere
 source /tmp/helpers.sh
+step_guard 3
 
 header "Step 3/7: The Problem — Secrets Are Everywhere"
 
