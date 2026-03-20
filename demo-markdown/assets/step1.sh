@@ -4,7 +4,7 @@ source /tmp/helpers.sh
 step_guard 1
 wait_for_setup
 
-header "Step 1/7: Install CloudTaser"
+header "Step 1/8: Install CloudTaser"
 
 info "Installing the CloudTaser operator and eBPF daemonset from the public Helm chart."
 

@@ -1,6 +1,6 @@
-# eBPF Blocks /proc/environ
+# Verify: Secrets Gone from K8s
 
-In step 3 you could read the password from /proc. Now watch eBPF block it — even as root.
+Try to find the password in K8s Secrets, etcd, env vars — it's gone. But psql still works.
 
 Run in the terminal:
 

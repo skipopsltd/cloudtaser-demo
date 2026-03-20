@@ -1,6 +1,6 @@
-# Summary & Comparison
+# eBPF Blocks /proc/environ
 
-See how CloudTaser compares to K8s Secrets, External Secrets Operator, Vault Agent, and CSI drivers.
+In step 3 you could read the password from /proc. Now watch eBPF block it — even as root.
 
 Run in the terminal:
 

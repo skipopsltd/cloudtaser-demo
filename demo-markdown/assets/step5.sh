@@ -1,58 +1,34 @@
 #!/bin/bash
-# Step 5: Verify secrets are gone from K8s, but password and data still work
+# Step 5: Redeploy with CloudTaser annotations
 source /tmp/helpers.sh
 step_guard 5
 
-header "Step 5/7: Verify — Secrets Gone, Data Intact"
+header "Step 5/8: Redeploy with CloudTaser"
 
-USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
+info "Now we redeploy PostgreSQL with CloudTaser annotations."
+info "No secrets in the manifest — the wrapper fetches them from the EU vault."
 
-info "Same password, same data, same PostgreSQL — but now the secret is nowhere in Kubernetes."
+section "CloudTaser pod manifest"
 
-section "K8s Secrets"
+run_cmd "cat /tmp/postgres-demo.yaml"
 
-run_cmd "kubectl get secrets -n default"
-
-info "No postgres-credentials secret. Just the default service account token."
-
-pause
-
-section "Search etcd"
-
-run_cmd "kubectl exec -n kube-system etcd-controlplane -- etcdctl \\
-  --endpoints=https://127.0.0.1:2379 \\
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \\
-  --cert=/etc/kubernetes/pki/etcd/server.crt \\
-  --key=/etc/kubernetes/pki/etcd/server.key \\
-  get \"\" --prefix --keys-only | grep -i postgres || echo \"Not found in etcd\""
+info "No passwords, no K8s Secrets — just annotations telling CloudTaser"
+info "which vault to connect to and which secrets to fetch."
 
 pause
 
-section "Environment variables inside the pod"
+section "Deploy the pod"
 
-run_cmd "kubectl exec postgres-demo -- bash -c 'echo \"POSTGRES_PASSWORD=\$POSTGRES_PASSWORD\"' || true"
-
-info "Empty — the password is not in the environment. It only exists in process memory."
-
-pause
-
-section "But the password still works"
+run_cmd "kubectl apply -f /tmp/postgres-demo.yaml"
+run_cmd "kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s"
 
 wait_for_postgres
 
-info "Connecting with the password from the EU vault:"
+section "Verify the wrapper is injected"
 
-run_cmd "kubectl exec postgres-demo -- bash -c \\
-  \"PGPASSWORD='${USER_PASSWORD}' psql -h 127.0.0.1 -U postgres -c \\\"SELECT 'Connected!' as status;\\\"\""
+run_cmd "kubectl get pod postgres-demo -o jsonpath='{.spec.containers[0].command}' | python3 -m json.tool"
 
-pause
-
-section "And your data survived the migration"
-
-run_cmd "kubectl exec postgres-demo -- bash -c \\
-  \"PGPASSWORD='${USER_PASSWORD}' psql -h 127.0.0.1 -U postgres -c 'SELECT * FROM demo_data;'\""
-
-info "Same data, same password — but the secret never touched Kubernetes."
-info "CloudTaser is a drop-in replacement. No data loss, no downtime risk."
+info "The original postgres entrypoint is now wrapped by cloudtaser-wrapper."
+info "It fetches secrets from the EU vault into process memory at startup."
 
 pause
