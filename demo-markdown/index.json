@@ -1,5 +1,5 @@
 {
-  "title": "CloudTaser: EU Data Sovereignty on US Cloud",
+  "title": "CloudTaser: EU/UK Data Sovereignty",
   "description": "See how CloudTaser keeps your secrets out of Kubernetes etcd and blocks /proc/environ reads — all while running on US cloud infrastructure.",
   "details": {
     "intro": {
