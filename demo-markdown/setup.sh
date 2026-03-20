@@ -33,13 +33,6 @@ fi
 echo "$SESSION_TOKEN" > /tmp/.cloudtaser-session-token
 echo "Session token acquired (1h TTL, scoped to demo paths)"
 
-# Write demo secrets to session-scoped path in EU Vault
-echo "Writing demo secrets to EU Vault (session: $SESSION_ID)..."
-curl -sf -X POST "$EU_VAULT/v1/secret/data/demo/$SESSION_ID/postgres" \
-  -H "X-Vault-Token: $SESSION_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"data": {"password": "CloudTaser-Demo-2026!", "username": "postgres"}}'
-
 # Template the postgres manifest with session-scoped path
 sed -i "s|secret/data/demo/postgres|secret/data/demo/$SESSION_ID/postgres|" /tmp/postgres-demo.yaml
 

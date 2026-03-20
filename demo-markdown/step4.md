@@ -1,6 +1,6 @@
-# Inspect Wrapper Injection
+# Fix It: EU Vault + CloudTaser
 
-See how the CloudTaser webhook mutated the pod to wrap the original entrypoint.
+Move your password to the EU vault and redeploy with CloudTaser protection.
 
 Run in the terminal:
 
