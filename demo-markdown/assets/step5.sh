@@ -4,6 +4,16 @@ source /tmp/helpers.sh
 
 header "Step 5/7: Verify — No Secrets in Kubernetes"
 
+section "Restart pod to pick up your new password"
+
+info "The wrapper fetches secrets at startup, so we restart the pod."
+
+run_cmd "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; \\
+  kubectl apply -f /tmp/postgres-demo.yaml && \\
+  kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s"
+
+pause
+
 info "Your password never touched Kubernetes."
 info "Not in K8s Secrets, not in etcd, not even in env vars."
 
@@ -37,11 +47,14 @@ pause
 section "But the password works — connect with psql"
 
 USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
-if [ -n "$USER_PASSWORD" ]; then
-    info "Connecting with your password: ${USER_PASSWORD}"
-fi
 
-run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\""
+if [ -n "$USER_PASSWORD" ]; then
+    info "Your password was: ${BOLD}${USER_PASSWORD}${RESET}"
+    run_cmd "PGPASSWORD='${USER_PASSWORD}' kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\""
+    rm -f /tmp/.user_password
+else
+    run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\""
+fi
 
 info "The app works normally even though the secret is nowhere in Kubernetes."
 

@@ -8,11 +8,11 @@ info "Type any password you want. It goes to the EU OpenBao vault in Frankfurt."
 info "This password will never be stored in Kubernetes."
 
 echo ""
-echo -ne "  ${BOLD}Enter your secret password: ${RESET}"
+echo -n "  ${BOLD}Enter your secret password: ${RESET}"
 read -r USER_PASSWORD
 
 while [ -z "$USER_PASSWORD" ]; do
-    echo -ne "  ${BOLD}Password cannot be empty. Try again: ${RESET}"
+    echo -n "  ${BOLD}Password cannot be empty. Try again: ${RESET}"
     read -r USER_PASSWORD
 done
 
@@ -38,18 +38,12 @@ section "See for yourself in the vault UI"
 SESSION_ID=$(cat /tmp/.session_id)
 SESSION_TOKEN=$(cat /tmp/.cloudtaser-session-token)
 
-echo -e "  Link:  ${BG_BLUE} https://secret.cloudtaser.io/ui/vault/secrets/secret/show/demo/${SESSION_ID}/postgres ${RESET}"
-echo -e "  Token: ${BOLD}${SESSION_TOKEN}${RESET}"
+echo "  ${BG_BLUE} https://secret.cloudtaser.io/ui ${RESET}"
 echo ""
-
-pause
-
-section "Recreate pod to pick up the new password"
-
-run_cmd "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null; \\
-  kubectl apply -f /tmp/postgres-demo.yaml && \\
-  kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s"
-
-info "Pod restarted. The wrapper fetched your password from the EU vault."
+echo "  ${BOLD}How to find your secret:${RESET}"
+echo "  1. Open the link above"
+echo "  2. Choose ${BOLD}Token${RESET} method and paste: ${BOLD}${SESSION_TOKEN}${RESET}"
+echo "  3. Click ${BOLD}secret/${RESET} → ${BOLD}demo/${RESET} → ${BOLD}${SESSION_ID}/${RESET} → ${BOLD}postgres${RESET}"
+echo ""
 
 pause
