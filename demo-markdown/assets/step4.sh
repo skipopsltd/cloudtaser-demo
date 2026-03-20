@@ -1,6 +1,7 @@
 #!/bin/bash
 # Step 4: Move password to EU vault, redeploy with CloudTaser
 source /tmp/helpers.sh
+step_guard 4
 
 header "Step 4/7: Fix It — Move to EU Vault + CloudTaser"
 

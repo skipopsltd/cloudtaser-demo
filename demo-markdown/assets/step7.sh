@@ -1,6 +1,7 @@
 #!/bin/bash
 # Step 7: Comparison table and credits
 source /tmp/helpers.sh
+step_guard 7
 
 header "Step 7/7: CloudTaser vs Alternatives"
 

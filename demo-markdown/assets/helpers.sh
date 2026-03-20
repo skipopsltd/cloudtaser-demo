@@ -12,9 +12,15 @@ RESET=$'\033[0m'
 
 header() {
     clear
-    echo "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
-    echo "${BOLD}  CloudTaser  |  $1${RESET}"
-    echo "${BOLD}${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}"
+    local title="  CloudTaser  |  $1"
+    local len=${#title}
+    local w=$(tput cols 2>/dev/null || echo 80)
+    if [ "$len" -gt "$w" ]; then len=$w; fi
+    local line=""
+    for ((i=0; i<len; i++)); do line+="━"; done
+    echo "${BOLD}${GREEN}${line}${RESET}"
+    echo "${BOLD}${title}${RESET}"
+    echo "${BOLD}${GREEN}${line}${RESET}"
     echo ""
 }
 
@@ -39,6 +45,18 @@ pause() {
     echo ""
     echo "  ${DIM}Press ENTER to continue...${RESET}"
     read -r
+}
+
+step_guard() {
+    local step="$1"
+    local marker="/tmp/.cloudtaser-step${step}-done"
+    if [ -f "$marker" ]; then
+        echo ""
+        echo "  ${YELLOW}Step ${step} already done. Please proceed to the next step on the left side.${RESET}"
+        echo ""
+        exit 0
+    fi
+    trap "touch $marker" EXIT
 }
 
 wait_for_setup() {
