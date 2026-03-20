@@ -6,9 +6,7 @@ wait_for_setup
 
 header "Step 1/8: Install CloudTaser"
 
-info "Installing the CloudTaser operator and eBPF daemonset from the public Helm chart."
-
-section "Helm install"
+section "Install operator + eBPF daemonset"
 
 run_cmd "helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \\
   --version 0.1.20 \\
@@ -18,9 +16,7 @@ run_cmd "helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudt
 
 pause
 
-section "Unseal the operator with the EU vault session token"
-
-info "The operator needs the vault token to auto-unseal wrapper pods."
+section "Unseal operator with EU vault token"
 
 OPERATOR_POD=$(kubectl -n cloudtaser-system get pod -l control-plane=controller-manager -o jsonpath='{.items[0].metadata.name}')
 
@@ -34,12 +30,6 @@ run_cmd "curl -sf -X POST http://localhost:8199/v1/unseal \\
 
 kill $PF_PID 2>/dev/null || true
 
-pause
-
-section "Verify installation"
-
 run_cmd "kubectl get pods -n cloudtaser-system"
-
-info "CloudTaser is installed: operator + webhook + eBPF daemonset."
 
 pause
