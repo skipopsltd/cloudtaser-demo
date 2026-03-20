@@ -60,10 +60,12 @@ step_guard() {
 }
 
 wait_for_postgres() {
+    local pw
+    pw=$(cat /tmp/.user_password 2>/dev/null || echo "")
     local max=30
     local i=0
     printf "  %sWaiting for PostgreSQL to accept connections...%s" "$DIM" "$RESET"
-    while ! kubectl exec postgres-demo -- psql -U postgres -c "SELECT 1" &>/dev/null; do
+    while ! kubectl exec postgres-demo -- bash -c "PGPASSWORD='$pw' psql -h 127.0.0.1 -U postgres -c 'SELECT 1'" &>/dev/null; do
         i=$((i+1))
         if [ $i -ge $max ]; then
             printf "\n  %sPostgreSQL did not become ready in time.%s\n" "$RED" "$RESET"

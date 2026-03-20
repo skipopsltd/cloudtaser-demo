@@ -5,6 +5,8 @@ step_guard 5
 
 header "Step 5/7: Verify — Secrets Gone, Data Intact"
 
+USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
+
 info "Same password, same data, same PostgreSQL — but now the secret is nowhere in Kubernetes."
 
 section "K8s Secrets"
@@ -38,13 +40,17 @@ section "But the password still works"
 
 wait_for_postgres
 
-run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\""
+info "Connecting with the password from the EU vault:"
+
+run_cmd "kubectl exec postgres-demo -- bash -c \\
+  \"PGPASSWORD='${USER_PASSWORD}' psql -h 127.0.0.1 -U postgres -c \\\"SELECT 'Connected!' as status;\\\"\""
 
 pause
 
 section "And your data survived the migration"
 
-run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT * FROM demo_data;\""
+run_cmd "kubectl exec postgres-demo -- bash -c \\
+  \"PGPASSWORD='${USER_PASSWORD}' psql -h 127.0.0.1 -U postgres -c 'SELECT * FROM demo_data;'\""
 
 info "Same data, same password — but the secret never touched Kubernetes."
 info "CloudTaser is a drop-in replacement. No data loss, no downtime risk."
