@@ -6,25 +6,26 @@ step_guard 4
 header "Step 4/8: Move Password to EU Vault"
 
 USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
+SESSION_ID=$(cat /tmp/.session_id)
+SESSION_TOKEN=$(cat /tmp/.cloudtaser-session-token)
 
 section "Write password to EU vault (Frankfurt)"
 
-run_cmd "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/\$(cat /tmp/.session_id)/postgres\" \\
-  -H \"X-Vault-Token: \$(cat /tmp/.cloudtaser-session-token)\" \\
+jq -n --arg pw "$USER_PASSWORD" '{data: {password: $pw, username: "postgres"}}' > /tmp/.vault_payload
+
+run_cmd "curl -sf -X POST https://secret.cloudtaser.io/v1/secret/data/demo/${SESSION_ID}/postgres \\
+  -H \"X-Vault-Token: ${SESSION_TOKEN}\" \\
   -H \"Content-Type: application/json\" \\
-  -d \$(jq -n --arg pw \"$USER_PASSWORD\" '{data: {password: \$pw, username: \"postgres\"}}') \\
+  -d @/tmp/.vault_payload \\
   && echo \"Secret stored in EU Vault (Frankfurt)\""
 
 section "Read it back"
 
-run_cmd "curl -sf \"https://secret.cloudtaser.io/v1/secret/data/demo/\$(cat /tmp/.session_id)/postgres\" \\
-  -H \"X-Vault-Token: \$(cat /tmp/.cloudtaser-session-token)\" \\
-  | python3 -c 'import sys,json; d=json.load(sys.stdin)[\"data\"][\"data\"]; print(\"Password in vault: \" + d[\"password\"])'"
+run_cmd "curl -sf https://secret.cloudtaser.io/v1/secret/data/demo/${SESSION_ID}/postgres \\
+  -H \"X-Vault-Token: ${SESSION_TOKEN}\" \\
+  | python3 -c \"import sys,json; d=json.load(sys.stdin)['data']['data']; print('Password in vault: ' + d['password'])\""
 
 section "Vault UI"
-
-SESSION_ID=$(cat /tmp/.session_id)
-SESSION_TOKEN=$(cat /tmp/.cloudtaser-session-token)
 
 echo "  ${BG_BLUE} https://secret.cloudtaser.io/ui ${RESET}"
 echo ""
