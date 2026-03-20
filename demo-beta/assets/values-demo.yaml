@@ -3,11 +3,10 @@ namespace: cloudtaser-system
 imagePullSecrets: []
 
 operator:
-  replicaCount: 2
-  leaderElect: true
+  ha: true
   image:
     repository: ghcr.io/skipopsltd/cloudtaser-operator
-    tag: "v0.4.17-amd64"
+    tag: "v0.4.18-amd64"
     pullPolicy: IfNotPresent
   resources:
     requests:
