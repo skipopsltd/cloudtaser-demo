@@ -4,9 +4,8 @@ source /tmp/helpers.sh
 
 header "Step 6/7: eBPF Runtime Enforcement"
 
-info "On a normal K8s node, root can read any process's environment
-  via /proc/<pid>/environ."
-info "CloudTaser's eBPF kprobe blocks this at kernel level — even for root."
+info "In step 3 we read the password from /proc/environ — anyone with host access could."
+info "Now CloudTaser's eBPF kprobe blocks this at kernel level — even for root."
 
 section "Find the protected process PID"
 
@@ -25,6 +24,7 @@ run_cmd "sudo cat /proc/${PROTECTED_PID}/environ 2>&1; echo \"Exit code: \$?\""
 
 info "Permission denied — even as root."
 info "The eBPF kprobe returned -EACCES before any data was read."
+info "Compare this to step 3, where we could freely read the password."
 
 pause
 

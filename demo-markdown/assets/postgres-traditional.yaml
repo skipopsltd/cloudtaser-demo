@@ -3,18 +3,13 @@ kind: Pod
 metadata:
   name: postgres-demo
   namespace: default
-  annotations:
-    cloudtaser.io/inject: "true"
-    cloudtaser.io/ebpf: "true"
-    cloudtaser.io/vault-address: "https://secret.cloudtaser.io"
-    cloudtaser.io/vault-auth-method: "token"
-    cloudtaser.io/secret-paths: "secret/data/demo/postgres"
-    cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
-    cloudtaser.io/vault-tls-skip-verify: "true"
 spec:
   containers:
     - name: postgres
       image: postgres:16
+      envFrom:
+        - secretRef:
+            name: postgres-credentials
       ports:
         - containerPort: 5432
       volumeMounts:

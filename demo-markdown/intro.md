@@ -5,10 +5,10 @@ EU/UK data sovereignty on US cloud infrastructure. Secrets never touch Kubernete
 ## What this demo covers
 
 1. Install CloudTaser operator and eBPF daemonset
-2. Deploy a PostgreSQL pod — no secrets in the manifest
-3. Set your own password in the EU vault (Frankfurt)
-4. Inspect how the wrapper injection works
-5. Verify: no secrets in K8s Secrets, etcd, or env vars
+2. Deploy PostgreSQL the **traditional way** — K8s Secret + env vars
+3. See the problem: your password is visible in etcd, env, /proc
+4. **Fix it**: move the password to an EU vault and redeploy with CloudTaser
+5. Verify: secrets are gone from K8s, but the app still works
 6. Watch eBPF block a root-level `/proc/environ` read
 7. Compare CloudTaser to alternatives
 
