@@ -7,6 +7,11 @@ spec:
   containers:
     - name: postgres
       image: postgres:16
+      env:
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: scram-sha-256
+        - name: POSTGRES_INITDB_ARGS
+          value: "--auth-host=scram-sha-256"
       envFrom:
         - secretRef:
             name: postgres-credentials

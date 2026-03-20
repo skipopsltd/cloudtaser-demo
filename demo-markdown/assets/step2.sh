@@ -47,14 +47,19 @@ wait_for_postgres
 
 section "Verify it works and write a record"
 
-run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \\
-  \"CREATE TABLE demo_data (id SERIAL, message TEXT, created_at TIMESTAMP DEFAULT NOW());\""
+info "PostgreSQL requires authentication — we use the password from the env var."
 
-run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \\
-  \"INSERT INTO demo_data (message) VALUES ('Created BEFORE CloudTaser migration');\""
+run_cmd "kubectl exec postgres-demo -- bash -c \\
+  \"PGPASSWORD=\\\$POSTGRES_PASSWORD psql -h 127.0.0.1 -U postgres -c \\
+  'CREATE TABLE demo_data (id SERIAL, message TEXT, created_at TIMESTAMP DEFAULT NOW());'\""
 
-run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \\
-  \"SELECT * FROM demo_data;\""
+run_cmd "kubectl exec postgres-demo -- bash -c \\
+  \"PGPASSWORD=\\\$POSTGRES_PASSWORD psql -h 127.0.0.1 -U postgres -c \\
+  \\\"INSERT INTO demo_data (message) VALUES ('Created BEFORE CloudTaser migration');\\\"\""
+
+run_cmd "kubectl exec postgres-demo -- bash -c \\
+  \"PGPASSWORD=\\\$POSTGRES_PASSWORD psql -h 127.0.0.1 -U postgres -c \\
+  'SELECT * FROM demo_data;'\""
 
 info "PostgreSQL is running with your password and has data stored."
 info "Let's see what's actually happening under the hood..."
