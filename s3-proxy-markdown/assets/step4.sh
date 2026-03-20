@@ -11,7 +11,7 @@ info "Now download through the proxy — it decrypts transparently."
 
 section "Download through proxy"
 
-run_cmd "mc cp proxy/\${BUCKET}/confidential-report.txt /tmp/proxy-copy.txt"
+run_cmd "mc cat proxy/\${BUCKET}/confidential-report.txt > /tmp/proxy-copy.txt"
 
 section "Decrypted content"
 
