@@ -1,40 +1,58 @@
 #!/bin/bash
-# Step 6: eBPF blocks /proc/environ, show audit trail
+# Step 6: Verify secrets are gone from K8s, but password and data still work
 source /tmp/helpers.sh
 step_guard 6
 
-header "Step 6/7: eBPF Runtime Enforcement"
+header "Step 6/8: Verify — Secrets Gone, Data Intact"
 
-info "In step 3 we read the password from /proc/environ — anyone with host access could."
-info "Now CloudTaser's eBPF kprobe blocks this at kernel level — even for root."
+USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
 
-section "Find the protected process PID"
+info "Same password, same data, same PostgreSQL — but now the secret is nowhere in Kubernetes."
 
-run_cmd "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 \\
-  | grep -o '\"host_pid\":[0-9]*' | tail -1 | cut -d: -f2 \\
-  | tee /tmp/.protected_pid \\
-  | xargs -I{} echo \"Protected PID: {}\""
+section "K8s Secrets"
 
-pause
+run_cmd "kubectl get secrets -n default"
 
-section "Try to read /proc/PID/environ as root"
-
-PROTECTED_PID=$(cat /tmp/.protected_pid)
-
-run_cmd "sudo cat /proc/${PROTECTED_PID}/environ 2>&1; echo \"Exit code: \$?\""
-
-info "Permission denied — even as root."
-info "The eBPF kprobe returned -EACCES before any data was read."
-info "Compare this to step 3, where we could freely read the password."
+info "No postgres-credentials secret. Just the default service account token."
 
 pause
 
-section "Audit trail"
+section "Search etcd"
 
-run_cmd "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 \\
-  | grep -E \"ENVIRON|blocked\""
+run_cmd "kubectl exec -n kube-system etcd-controlplane -- etcdctl \\
+  --endpoints=https://127.0.0.1:2379 \\
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \\
+  --cert=/etc/kubernetes/pki/etcd/server.crt \\
+  --key=/etc/kubernetes/pki/etcd/server.key \\
+  get \"\" --prefix --keys-only | grep -i postgres || echo \"Not found in etcd\""
 
-info "Every access attempt is logged with PID, command, timestamp, and severity."
-info "Events forward to SIEM for GDPR/NIS2/DORA compliance."
+pause
+
+section "Environment variables inside the pod"
+
+run_cmd "kubectl exec postgres-demo -- bash -c 'echo \"POSTGRES_PASSWORD=\$POSTGRES_PASSWORD\"' || true"
+
+info "Empty — the password is not in the environment. It only exists in process memory."
+
+pause
+
+section "But the password still works"
+
+wait_for_postgres
+
+info "Connecting with the password from the EU vault:"
+
+run_cmd "kubectl exec postgres-demo -- bash -c \\
+  \"PGPASSWORD='${USER_PASSWORD}' psql -h 127.0.0.1 -U postgres -c \\\"SELECT 'Connected!' as status;\\\"\""
+
+pause
+
+section "And your data survived the migration"
+
+run_cmd "kubectl exec postgres-demo -- bash -c \\
+  \"PGPASSWORD='${USER_PASSWORD}' psql -h 127.0.0.1 -U postgres -c 'SELECT * FROM demo_data;'\""
+
+info "Same data, same password — but the secret never touched Kubernetes."
+info "CloudTaser is a drop-in replacement. No data loss, no downtime risk."
 
 pause

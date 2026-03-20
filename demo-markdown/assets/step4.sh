@@ -1,14 +1,13 @@
 #!/bin/bash
-# Step 4: Move password to EU vault, redeploy with CloudTaser
+# Step 4: Move password to EU vault, delete old K8s Secret
 source /tmp/helpers.sh
 step_guard 4
 
-header "Step 4/7: Fix It — Move to EU Vault + CloudTaser"
+header "Step 4/8: Move Password to EU Vault"
 
 USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
 
-info "Now let's fix this. We'll move the password to an EU-hosted OpenBao vault"
-info "and let CloudTaser inject it directly into process memory."
+info "Now let's fix this. We'll move the password to an EU-hosted OpenBao vault."
 
 section "Write password to EU vault (Frankfurt)"
 
@@ -45,28 +44,5 @@ run_cmd "kubectl delete pod postgres-demo --grace-period=0 --force 2>/dev/null"
 run_cmd "kubectl delete secret postgres-credentials"
 
 info "The K8s Secret is gone. The password now lives only in the EU vault."
-
-pause
-
-section "Redeploy with CloudTaser annotations"
-
-run_cmd "cat /tmp/postgres-demo.yaml"
-
-info "No secrets in the manifest — just annotations telling CloudTaser where"
-info "to fetch them from. The operator webhook injects the wrapper automatically."
-
-pause
-
-run_cmd "kubectl apply -f /tmp/postgres-demo.yaml"
-run_cmd "kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s"
-
-wait_for_postgres
-
-section "Verify the wrapper is injected"
-
-run_cmd "kubectl get pod postgres-demo -o jsonpath='{.spec.containers[0].command}' | python3 -m json.tool"
-
-info "The original postgres entrypoint is now wrapped by cloudtaser-wrapper."
-info "It fetches secrets from the EU vault into process memory at startup."
 
 pause

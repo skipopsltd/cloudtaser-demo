@@ -1,6 +1,6 @@
-# Verify: Secrets Gone from K8s
+# Redeploy with CloudTaser
 
-Try to find the password in K8s Secrets, etcd, env vars — it's gone. But psql still works.
+Redeploy PostgreSQL with CloudTaser annotations — no secrets in the manifest.
 
 Run in the terminal:
 

@@ -1,6 +1,6 @@
-# Fix It: EU Vault + CloudTaser
+# Move Password to EU Vault
 
-Move your password to the EU vault and redeploy with CloudTaser protection.
+Move your password to the EU OpenBao vault and delete the K8s Secret.
 
 Run in the terminal:
 
