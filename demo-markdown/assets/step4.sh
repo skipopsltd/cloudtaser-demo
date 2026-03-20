@@ -34,7 +34,7 @@ echo ""
 echo "  ${BOLD}How to find your secret:${RESET}"
 echo "  1. Open the link above"
 echo "  2. Choose ${BOLD}Token${RESET} method and paste: ${BOLD}${SESSION_TOKEN}${RESET}"
-echo "  3. Click ${BOLD}secret/${RESET} → ${BOLD}demo/${RESET} → ${BOLD}${SESSION_ID}/${RESET} → ${BOLD}postgres${RESET}"
+echo "  3. Click ${BOLD}secret/${RESET}, then enter this path: ${BOLD}demo/${SESSION_ID}/postgres${RESET}"
 echo ""
 
 pause
