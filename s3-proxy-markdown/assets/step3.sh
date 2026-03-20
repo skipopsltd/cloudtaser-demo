@@ -11,7 +11,7 @@ info "Let's bypass the proxy and read the file directly from the cloud."
 
 section "Download directly from MinIO (bypassing proxy)"
 
-run_cmd "mc cp cloud/\${BUCKET}/confidential-report.txt /tmp/cloud-copy.txt"
+run_cmd "mc cat cloud/\${BUCKET}/confidential-report.txt > /tmp/cloud-copy.txt"
 
 section "What's in the file?"
 
