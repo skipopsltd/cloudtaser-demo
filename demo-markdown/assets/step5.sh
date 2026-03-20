@@ -36,6 +36,8 @@ pause
 
 section "But the password still works"
 
+wait_for_postgres
+
 run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \"SELECT 'Connected!' as status;\""
 
 pause

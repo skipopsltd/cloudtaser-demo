@@ -60,6 +60,8 @@ pause
 run_cmd "kubectl apply -f /tmp/postgres-demo.yaml"
 run_cmd "kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s"
 
+wait_for_postgres
+
 section "Verify the wrapper is injected"
 
 run_cmd "kubectl get pod postgres-demo -o jsonpath='{.spec.containers[0].command}' | python3 -m json.tool"
