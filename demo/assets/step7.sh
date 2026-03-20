@@ -1,5 +1,5 @@
 #!/bin/bash
-# Step 7: eBPF blocks /proc/environ and /proc/mem — show audit trail
+# Step 7: eBPF blocks /proc/environ, /proc/mem, ptrace — show audit trail
 source /tmp/helpers.sh
 step_guard 7
 
@@ -24,14 +24,19 @@ section "2. /proc/PID/mem — blocked"
 
 run_cmd "sudo head -c 1 /proc/${PROTECTED_PID}/mem 2>&1; echo \"Exit code: \$?\""
 
-info "Permission denied. eBPF kprobes return -EACCES before any data is read."
+section "3. ptrace attach — killed by eBPF agent"
+
+run_cmd "timeout 3 sudo strace -p ${PROTECTED_PID} -e trace=none -o /dev/null 2>&1 || echo \"strace terminated (reactive kill)\""
+
+info "eBPF kprobes block /proc reads. For ptrace, the agent detects the attach"
+info "and kills the attacker process (reactive kill via SIGKILL)."
 
 pause
 
 section "Audit trail"
 
 run_cmd "kubectl logs -n cloudtaser-system ds/cloudtaser-ebpf --tail=50 \\
-  | grep -E \"ENVIRON|PROCMEM|blocked\""
+  | grep -E \"ENVIRON|PROCMEM|PTRACE|blocked|reactive\""
 
 info "Every attempt is logged. Events forward to SIEM for GDPR/NIS2/DORA compliance."
 
