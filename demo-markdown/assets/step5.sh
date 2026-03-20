@@ -1,6 +1,7 @@
 #!/bin/bash
 # Step 5: Verify secrets are gone from K8s, but password and data still work
 source /tmp/helpers.sh
+step_guard 5
 
 header "Step 5/7: Verify — Secrets Gone, Data Intact"
 

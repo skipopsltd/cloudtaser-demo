@@ -41,6 +41,18 @@ pause() {
     read -r
 }
 
+step_guard() {
+    local step="$1"
+    local marker="/tmp/.cloudtaser-step${step}-done"
+    if [ -f "$marker" ]; then
+        echo ""
+        echo "  ${YELLOW}Step ${step} already done. Please proceed to the next step on the left side.${RESET}"
+        echo ""
+        exit 0
+    fi
+    trap "touch $marker" EXIT
+}
+
 wait_for_setup() {
     local spin='|/-\'
     local i=0

@@ -1,6 +1,7 @@
 #!/bin/bash
 # Step 1: Install CloudTaser operator and eBPF daemonset
 source /tmp/helpers.sh
+step_guard 1
 wait_for_setup
 
 header "Step 1/7: Install CloudTaser"
