@@ -9,7 +9,7 @@ header "Step 1/8: Install CloudTaser"
 section "Install operator + eBPF daemonset"
 
 run_cmd "helm install cloudtaser oci://ghcr.io/skipopsltd/cloudtaser-helm/cloudtaser \\
-  --version 0.1.22 \\
+  --version 0.2.0 \\
   --namespace cloudtaser-system --create-namespace \\
   -f /tmp/values-demo.yaml \\
   --wait --timeout=180s"
@@ -18,9 +18,15 @@ pause
 
 section "Unseal operator with EU vault token"
 
-OPERATOR_POD=$(kubectl -n cloudtaser-system get pod -l control-plane=controller-manager -o jsonpath='{.items[0].metadata.name}')
+# Find the leader pod (the one that acquired the lease)
+LEADER_POD=$(kubectl -n cloudtaser-system get lease cloudtaser-operator-leader -o jsonpath='{.spec.holderIdentity}' 2>/dev/null | sed 's/_.*//')
+if [ -z "$LEADER_POD" ]; then
+  # Fallback: use the first ready pod
+  LEADER_POD=$(kubectl -n cloudtaser-system get pod -l control-plane=controller-manager --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
+fi
+echo "Leader pod: ${LEADER_POD}"
 
-run_cmd "kubectl -n cloudtaser-system port-forward pod/${OPERATOR_POD} 8199:8199 &>/dev/null &"
+run_cmd "kubectl -n cloudtaser-system port-forward pod/${LEADER_POD} 8199:8199 &>/dev/null &"
 PF_PID=$!
 sleep 2
 
