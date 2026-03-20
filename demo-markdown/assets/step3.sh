@@ -1,49 +1,50 @@
 #!/bin/bash
-# Step 3: Set your own secret password in the EU vault
+# Step 3: Show the problem — secrets visible everywhere
 source /tmp/helpers.sh
 
-header "Step 3/7: Set Your Own Secret Password"
+header "Step 3/7: The Problem — Secrets Are Everywhere"
 
-info "Type any password you want. It goes to the EU OpenBao vault in Frankfurt."
-info "This password will never be stored in Kubernetes."
+USER_PASSWORD=$(cat /tmp/.user_password 2>/dev/null || echo "")
 
-echo ""
-echo -n "  ${BOLD}Enter your secret password: ${RESET}"
-read -r USER_PASSWORD
+info "Your password is supposed to be secret. Let's see how secret it really is."
 
-while [ -z "$USER_PASSWORD" ]; do
-    echo -n "  ${BOLD}Password cannot be empty. Try again: ${RESET}"
-    read -r USER_PASSWORD
-done
+section "1. Kubernetes Secrets are just base64"
 
-echo "$USER_PASSWORD" > /tmp/.user_password
-echo ""
+run_cmd "kubectl get secret postgres-credentials -o jsonpath='{.data.POSTGRES_PASSWORD}' | base64 -d && echo"
 
-section "Write password to EU vault (Frankfurt)"
+info "Anyone with kubectl access can read it. Base64 is encoding, not encryption."
 
-run_cmd "curl -sf -X POST \"https://secret.cloudtaser.io/v1/secret/data/demo/\$(cat /tmp/.session_id)/postgres\" \\
-  -H \"X-Vault-Token: \$(cat /tmp/.cloudtaser-session-token)\" \\
-  -H \"Content-Type: application/json\" \\
-  -d \$(jq -n --arg pw \"$USER_PASSWORD\" '{data: {password: \$pw, username: \"postgres\"}}') \\
-  && echo \"Secret updated in EU Vault (Frankfurt)\""
+pause
 
-section "Read it back — proof it's stored in EU"
+section "2. Stored in plain text in etcd"
 
-run_cmd "curl -sf \"https://secret.cloudtaser.io/v1/secret/data/demo/\$(cat /tmp/.session_id)/postgres\" \\
-  -H \"X-Vault-Token: \$(cat /tmp/.cloudtaser-session-token)\" \\
-  | python3 -c 'import sys,json; d=json.load(sys.stdin)[\"data\"][\"data\"]; print(\"Password in vault: \" + d[\"password\"])'"
+run_cmd "kubectl exec -n kube-system etcd-controlplane -- etcdctl \\
+  --endpoints=https://127.0.0.1:2379 \\
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \\
+  --cert=/etc/kubernetes/pki/etcd/server.crt \\
+  --key=/etc/kubernetes/pki/etcd/server.key \\
+  get /registry/secrets/default/postgres-credentials --print-value-only | strings | grep -E '${USER_PASSWORD}' || echo '(search etcd for your password)'"
 
-section "See for yourself in the vault UI"
+info "etcd stores K8s Secrets in plain text (unless encryption-at-rest is configured — most clusters don't)."
 
-SESSION_ID=$(cat /tmp/.session_id)
-SESSION_TOKEN=$(cat /tmp/.cloudtaser-session-token)
+pause
 
-echo "  ${BG_BLUE} https://secret.cloudtaser.io/ui ${RESET}"
-echo ""
-echo "  ${BOLD}How to find your secret:${RESET}"
-echo "  1. Open the link above"
-echo "  2. Choose ${BOLD}Token${RESET} method and paste: ${BOLD}${SESSION_TOKEN}${RESET}"
-echo "  3. Click ${BOLD}secret/${RESET} → ${BOLD}demo/${RESET} → ${BOLD}${SESSION_ID}/${RESET} → ${BOLD}postgres${RESET}"
-echo ""
+section "3. Visible as environment variables inside the pod"
+
+run_cmd "kubectl exec postgres-demo -- env | grep POSTGRES_PASSWORD"
+
+info "Any process in the container can read it. Any sidecar too."
+
+pause
+
+section "4. Readable from the host via /proc/environ"
+
+run_cmd "sudo cat /proc/\$(pgrep -x postgres | head -1)/environ 2>/dev/null | tr '\\0' '\\n' | grep POSTGRES_PASSWORD || echo 'Could not find process'"
+
+info "Anyone with host access (or a compromised container with hostPID) can read"
+info "every secret from every pod on the node. This is the attack surface."
+info ""
+info "Under CLOUD Act and FISA 702, the US cloud provider can be compelled"
+info "to hand over this data — including your secrets."
 
 pause

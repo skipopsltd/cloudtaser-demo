@@ -1,6 +1,6 @@
 # eBPF Blocks /proc/environ
 
-Watch eBPF block a root-level `/proc/environ` read at kernel level and view the audit trail.
+In step 3 you could read the password from /proc. Now watch eBPF block it — even as root.
 
 Run in the terminal:
 

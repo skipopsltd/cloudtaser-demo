@@ -8,10 +8,10 @@
     },
     "steps": [
       { "title": "Install CloudTaser", "text": "step1.md" },
-      { "title": "Deploy Protected PostgreSQL", "text": "step2.md" },
-      { "title": "Set Your Secret Password", "text": "step3.md" },
-      { "title": "Inspect Wrapper Injection", "text": "step4.md" },
-      { "title": "Verify: No Secrets in K8s", "text": "step5.md" },
+      { "title": "Deploy PostgreSQL (Traditional)", "text": "step2.md" },
+      { "title": "The Problem: Secrets Everywhere", "text": "step3.md" },
+      { "title": "Fix It: EU Vault + CloudTaser", "text": "step4.md" },
+      { "title": "Verify: Secrets Gone from K8s", "text": "step5.md" },
       { "title": "eBPF Blocks /proc/environ", "text": "step6.md" },
       { "title": "Summary & Comparison", "text": "step7.md" }
     ],
@@ -22,6 +22,7 @@
       "host01": [
         { "file": "values-demo.yaml", "target": "/tmp/" },
         { "file": "postgres-demo.yaml", "target": "/tmp/" },
+        { "file": "postgres-traditional.yaml", "target": "/tmp/" },
         { "file": "helpers.sh", "target": "/tmp/", "chmod": "+x" },
         { "file": "step1.sh", "target": "/tmp/", "chmod": "+x" },
         { "file": "step2.sh", "target": "/tmp/", "chmod": "+x" },

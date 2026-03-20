@@ -1,6 +1,6 @@
-# Deploy Protected PostgreSQL
+# Deploy PostgreSQL (Traditional)
 
-Deploy a PostgreSQL pod with CloudTaser annotations — no secrets in the manifest.
+Choose a password and deploy PostgreSQL the traditional way — with a K8s Secret.
 
 Run in the terminal:
 

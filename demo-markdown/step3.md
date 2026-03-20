@@ -1,6 +1,6 @@
-# Set Your Secret Password
+# The Problem: Secrets Everywhere
 
-Choose your own password and store it in the EU OpenBao vault in Frankfurt.
+See why K8s Secrets aren't really secret: visible in etcd, env vars, and /proc.
 
 Run in the terminal:
 

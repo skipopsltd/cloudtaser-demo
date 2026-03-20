@@ -1,29 +1,59 @@
 #!/bin/bash
-# Step 2: Deploy a PostgreSQL pod with CloudTaser annotations
+# Step 2: Deploy PostgreSQL the traditional way with a K8s Secret
 source /tmp/helpers.sh
 
-header "Step 2/7: Deploy a Protected PostgreSQL Pod"
+header "Step 2/7: Deploy PostgreSQL (Traditional Way)"
 
-info "No secrets in the manifest — they come from the EU vault."
-info "The operator webhook will auto-inject the CloudTaser wrapper."
+info "First, let's deploy PostgreSQL the way most teams do it today:"
+info "store the password in a Kubernetes Secret and reference it from the pod."
 
-section "Pod manifest"
+echo ""
+echo -n "  ${BOLD}Choose a password for PostgreSQL: ${RESET}"
+read -r USER_PASSWORD
 
-run_cmd "cat /tmp/postgres-demo.yaml"
+while [ -z "$USER_PASSWORD" ]; do
+    echo -n "  ${BOLD}Password cannot be empty. Try again: ${RESET}"
+    read -r USER_PASSWORD
+done
 
-info "Notice: no POSTGRES_PASSWORD anywhere. Just annotations telling CloudTaser
-  where to fetch secrets from."
+echo "$USER_PASSWORD" > /tmp/.user_password
+echo ""
+
+section "Create a K8s Secret with your password"
+
+run_cmd "kubectl create secret generic postgres-credentials \\
+  --from-literal=POSTGRES_PASSWORD='${USER_PASSWORD}' \\
+  --from-literal=POSTGRES_USER=postgres"
+
+pause
+
+section "View the pod manifest — references the secret"
+
+run_cmd "cat /tmp/postgres-traditional.yaml"
+
+info "Standard pattern: envFrom pulls all keys from the K8s Secret into env vars."
+info "Data is stored on a persistent volume so it survives pod restarts."
 
 pause
 
 section "Deploy the pod"
 
-run_cmd "kubectl apply -f /tmp/postgres-demo.yaml"
+run_cmd "kubectl apply -f /tmp/postgres-traditional.yaml"
 
 run_cmd "kubectl wait --for=condition=Ready pod/postgres-demo --timeout=120s"
 
-run_cmd "kubectl get pod postgres-demo -o wide"
+section "Verify it works and write a record"
 
-info "Pod is running. The webhook mutated it at creation to inject the wrapper."
+run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \\
+  \"CREATE TABLE demo_data (id SERIAL, message TEXT, created_at TIMESTAMP DEFAULT NOW());\""
+
+run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \\
+  \"INSERT INTO demo_data (message) VALUES ('Created BEFORE CloudTaser migration');\""
+
+run_cmd "kubectl exec postgres-demo -- psql -U postgres -c \\
+  \"SELECT * FROM demo_data;\""
+
+info "PostgreSQL is running with your password and has data stored."
+info "Let's see what's actually happening under the hood..."
 
 pause
