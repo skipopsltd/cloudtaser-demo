@@ -21,13 +21,22 @@ echo "$SESSION_ID" > /tmp/.session_id
 echo "Session ID: $SESSION_ID"
 
 # Get a scoped session token from the EU Vault (Frankfurt)
+# Retry up to 10 times — vault may still be starting after infra changes
 echo "Requesting session token from EU Vault..."
-SESSION_TOKEN=$(curl -sf -X POST "$EU_VAULT/v1/auth/token/create/demo" \
-  -H "X-Vault-Token: $PROVISIONER_TOKEN" \
-  -d '{}' | jq -r '.auth.client_token')
+SESSION_TOKEN=""
+for i in $(seq 1 10); do
+  SESSION_TOKEN=$(curl -sfk -X POST "$EU_VAULT/v1/auth/token/create/demo" \
+    -H "X-Vault-Token: $PROVISIONER_TOKEN" \
+    -d '{}' 2>/dev/null | jq -r '.auth.client_token' 2>/dev/null)
+  if [ -n "$SESSION_TOKEN" ] && [ "$SESSION_TOKEN" != "null" ]; then
+    break
+  fi
+  echo "Vault not ready, retrying ($i/10)..."
+  sleep 3
+done
 
 if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
-  echo "ERROR: Failed to get session token from EU Vault"
+  echo "ERROR: Failed to get session token from EU Vault after 10 attempts"
   exit 1
 fi
 echo "$SESSION_TOKEN" > /tmp/.cloudtaser-session-token
