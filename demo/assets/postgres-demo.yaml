@@ -8,16 +8,20 @@ metadata:
     cloudtaser.io/ebpf: "true"
     cloudtaser.io/vault-address: "https://secret.cloudtaser.io"
     cloudtaser.io/vault-auth-method: "token"
+    cloudtaser.io/vault-skip-verify: "true"
     cloudtaser.io/secret-paths: "secret/data/demo/postgres"
     cloudtaser.io/env-map: "password=POSTGRES_PASSWORD,username=POSTGRES_USER"
-    cloudtaser.io/vault-tls-skip-verify: "true"
 spec:
   containers:
     - name: postgres
       image: postgres:16
+      securityContext:
+        readOnlyRootFilesystem: false
       env:
         - name: POSTGRES_HOST_AUTH_METHOD
           value: scram-sha-256
+        - name: VAULT_SKIP_VERIFY
+          value: "true"
       ports:
         - containerPort: 5432
       volumeMounts:
