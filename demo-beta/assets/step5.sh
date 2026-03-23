@@ -29,9 +29,11 @@ kubectl port-forward pod/postgres-demo 8199:8199 &>/dev/null &
 PF_PID=$!
 sleep 2
 
-run_cmd "curl -sf -X POST http://localhost:8199/v1/unseal \\
-  -H \"Content-Type: application/json\" \\
-  -d '{\"token\":\"${SESSION_TOKEN}\"}' && echo 'Token delivered to wrapper'"
+# Unseal: deliver the vault token directly to wrapper process memory
+UNSEAL_PAYLOAD="{\"token\":\"${SESSION_TOKEN}\"}"
+run_cmd "curl -sf -X POST http://localhost:8199/v1/unseal \
+  -H 'Content-Type: application/json' \
+  -d '${UNSEAL_PAYLOAD}' && echo 'Token delivered to wrapper'"
 
 kill $PF_PID 2>/dev/null || true
 
