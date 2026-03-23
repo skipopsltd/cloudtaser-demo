@@ -13,7 +13,7 @@ section "Write password to EU vault (Frankfurt)"
 
 jq -n --arg pw "$USER_PASSWORD" '{data: {password: $pw, username: "postgres"}}' > /tmp/.vault_payload
 
-run_cmd "curl -sf -X POST https://secret.cloudtaser.io/v1/secret/data/demo/${SESSION_ID}/postgres \\
+run_cmd "curl -sfk -X POST https://secret.cloudtaser.io/v1/secret/data/demo/${SESSION_ID}/postgres \\
   -H \"X-Vault-Token: ${SESSION_TOKEN}\" \\
   -H \"Content-Type: application/json\" \\
   -d @/tmp/.vault_payload \\
@@ -21,7 +21,7 @@ run_cmd "curl -sf -X POST https://secret.cloudtaser.io/v1/secret/data/demo/${SES
 
 section "Read it back"
 
-run_cmd "curl -sf https://secret.cloudtaser.io/v1/secret/data/demo/${SESSION_ID}/postgres \\
+run_cmd "curl -sfk https://secret.cloudtaser.io/v1/secret/data/demo/${SESSION_ID}/postgres \\
   -H \"X-Vault-Token: ${SESSION_TOKEN}\" \\
   | python3 -c \"import sys,json; d=json.load(sys.stdin)['data']['data']; print('Password in vault: ' + d['password'])\""
 
