@@ -1,9 +1,8 @@
 # Demo-specific overrides only — image repos and tags come from chart defaults.
-# This ensures the demo always uses the latest released versions.
 
 operator:
   ha: true
-  vaultAddress: "https://secret.cloudtaser.io"
+  vaultAddress: "http://vault.cloudtaser-vault.svc:8200"
 
 ebpf:
   enabled: true

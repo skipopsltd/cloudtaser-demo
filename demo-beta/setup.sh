@@ -1,49 +1,81 @@
 #!/bin/bash
 # CloudTaser Demo — Background setup
-# Runs automatically during intro. Does NOT install CloudTaser (step1.sh does that visibly).
+# Deploys in-cluster OpenBao vault (KillerCoda pods can't reach external internet)
 
 set -euo pipefail
-
-EU_VAULT="https://secret.cloudtaser.io"
-PROVISIONER_TOKEN="demo-provisioner-v1"
 
 echo "Waiting for Kubernetes to be ready..."
 kubectl wait --for=condition=Ready node --all --timeout=300s
 
 echo "Setting up CloudTaser demo environment..."
-
-# Install jq
 apt-get update -qq && apt-get install -y -qq jq > /dev/null 2>&1
 
-# Generate unique session ID
-SESSION_ID=$(cat /proc/sys/kernel/random/uuid | cut -d- -f1)
-echo "$SESSION_ID" > /tmp/.session_id
-echo "Session ID: $SESSION_ID"
+# Deploy in-cluster OpenBao vault
+echo "Deploying in-cluster vault..."
+kubectl create namespace cloudtaser-vault 2>/dev/null || true
 
-# Get a scoped session token from the EU Vault (Frankfurt)
-# Retry up to 10 times — vault may still be starting after infra changes
-echo "Requesting session token from EU Vault..."
-SESSION_TOKEN=""
-for i in $(seq 1 10); do
-  SESSION_TOKEN=$(curl -sfk -X POST "$EU_VAULT/v1/auth/token/create/demo" \
-    -H "X-Vault-Token: $PROVISIONER_TOKEN" \
-    -d '{}' 2>/dev/null | jq -r '.auth.client_token' 2>/dev/null)
-  if [ -n "$SESSION_TOKEN" ] && [ "$SESSION_TOKEN" != "null" ]; then
-    break
-  fi
-  echo "Vault not ready, retrying ($i/10)..."
-  sleep 3
-done
+cat <<'EOF' | kubectl -n cloudtaser-vault apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vault
+  labels:
+    app: vault
+spec:
+  containers:
+    - name: vault
+      image: hashicorp/vault:1.19
+      args: ["server", "-dev", "-dev-root-token-id=demo-root-token", "-dev-listen-address=0.0.0.0:8200"]
+      ports:
+        - containerPort: 8200
+      env:
+        - name: VAULT_DEV_ROOT_TOKEN_ID
+          value: "demo-root-token"
+      readinessProbe:
+        httpGet:
+          path: /v1/sys/health
+          port: 8200
+        initialDelaySeconds: 3
+        periodSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+spec:
+  selector:
+    app: vault
+  ports:
+    - port: 8200
+      targetPort: 8200
+EOF
 
-if [ -z "$SESSION_TOKEN" ] || [ "$SESSION_TOKEN" = "null" ]; then
-  echo "ERROR: Failed to get session token from EU Vault after 10 attempts"
-  exit 1
-fi
-echo "$SESSION_TOKEN" > /tmp/.cloudtaser-session-token
-echo "Session token acquired (1h TTL, scoped to demo paths)"
+echo "Waiting for vault to be ready..."
+kubectl -n cloudtaser-vault wait --for=condition=Ready pod/vault --timeout=120s
 
-# Template the postgres manifest with session-scoped path
-sed -i "s|secret/data/demo/postgres|secret/data/demo/$SESSION_ID/postgres|" /tmp/postgres-demo.yaml
+# Configure vault
+echo "Configuring vault..."
+kubectl -n cloudtaser-vault exec vault -- sh -c '
+  export VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=demo-root-token
+  vault secrets enable -path=secret kv-v2 2>/dev/null || true
+  vault policy write demo - <<POLICY
+path "secret/data/*" { capabilities = ["create", "read", "update", "delete", "list"] }
+path "auth/token/create" { capabilities = ["update"] }
+POLICY
+  vault token create -policy=demo -ttl=1h -id=demo-session-token 2>/dev/null || true
+' >/dev/null 2>&1
+
+VAULT_ADDR="http://vault.cloudtaser-vault.svc:8200"
+
+# Save for use by step scripts
+echo "$VAULT_ADDR" > /tmp/.vault_addr
+echo "demo-session-token" > /tmp/.cloudtaser-session-token
+echo "demo" > /tmp/.session_id
+
+# Update postgres-demo.yaml vault address
+sed -i "s|https://secret.cloudtaser.io|${VAULT_ADDR}|" /tmp/postgres-demo.yaml
+# Remove vault-skip-verify annotation (not needed for HTTP)
+sed -i '/vault-skip-verify/d' /tmp/postgres-demo.yaml
 
 touch /tmp/.cloudtaser-pre-setup-done
-echo "Pre-setup complete. Waiting for user to run step1.sh for CloudTaser install."
+echo "Pre-setup complete. In-cluster vault running at ${VAULT_ADDR}"
