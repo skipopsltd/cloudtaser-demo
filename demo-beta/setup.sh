@@ -50,7 +50,7 @@ curl -sf --connect-timeout 2 --max-time 5 -X POST "https://t.cloudtaser.io/api/t
     -H "Content-Type: application/json" \
     -H "Origin: https://killercoda.com" \
     -H "openpanel-client-id: 3094e171-f235-49ec-87bd-4d5e786a6594" \
-    -d "{\"type\":\"track\",\"payload\":{\"name\":\"demo_started\",\"properties\":{\"demo\":\"operator-beta\",\"session\":\"$SESSION_ID\"}}}" \
+    -d "{\"type\":\"track\",\"payload\":{\"name\":\"operator-beta Started\",\"profileId\":\"$SESSION_ID\",\"properties\":{\"demo\":\"operator-beta\",\"session\":\"$SESSION_ID\"}}}" \
     >/dev/null 2>&1 || true
 
 touch /tmp/.cloudtaser-pre-setup-done
