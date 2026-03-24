@@ -48,7 +48,8 @@ sed -i "s|secret/data/demo/postgres|secret/data/demo/$SESSION_ID/postgres|" /tmp
 # Track demo session started
 curl -sf --connect-timeout 2 --max-time 5 -X POST "https://t.cloudtaser.io/api/track" \
     -H "Content-Type: application/json" \
-    -H "openpanel-client-id: b1226d35-7875-45e8-b9ea-b94564023aee" \
+    -H "Origin: https://killercoda.com" \
+    -H "openpanel-client-id: 3094e171-f235-49ec-87bd-4d5e786a6594" \
     -d "{\"type\":\"track\",\"payload\":{\"name\":\"demo_started\",\"properties\":{\"demo\":\"operator\",\"session\":\"$SESSION_ID\"}}}" \
     >/dev/null 2>&1 || true
 
