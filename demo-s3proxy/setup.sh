@@ -84,7 +84,8 @@ mc alias set proxy http://localhost:8190 Q3AM3UQ867SPQQA43P2F zuf+tfteSlswRu7BJ8
 _SID=$(cat /tmp/.session_id 2>/dev/null || echo "unknown")
 curl -sf --connect-timeout 2 --max-time 5 -X POST "https://t.cloudtaser.io/api/track" \
     -H "Content-Type: application/json" \
-    -H "openpanel-client-id: b1226d35-7875-45e8-b9ea-b94564023aee" \
+    -H "Origin: https://killercoda.com" \
+    -H "openpanel-client-id: 3094e171-f235-49ec-87bd-4d5e786a6594" \
     -d "{\"type\":\"track\",\"payload\":{\"name\":\"demo_started\",\"properties\":{\"demo\":\"s3-proxy\",\"session\":\"$_SID\"}}}" \
     >/dev/null 2>&1 || true
 
