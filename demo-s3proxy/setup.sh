@@ -85,6 +85,7 @@ _SID=$(cat /tmp/.session_id 2>/dev/null || echo "unknown")
 curl -sf --connect-timeout 2 --max-time 5 -X POST "https://t.cloudtaser.io/api/track" \
     -H "Content-Type: application/json" \
     -H "openpanel-client-id: b1226d35-7875-45e8-b9ea-b94564023aee" \
+    -H "openpanel-client-secret: sec_998066caf4683a55e3dd" \
     -d "{\"type\":\"track\",\"payload\":{\"name\":\"demo_started\",\"properties\":{\"demo\":\"s3-proxy\",\"session\":\"$_SID\"}}}" \
     >/dev/null 2>&1 || true
 
