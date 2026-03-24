@@ -86,7 +86,7 @@ curl -sf --connect-timeout 2 --max-time 5 -X POST "https://t.cloudtaser.io/api/t
     -H "Content-Type: application/json" \
     -H "Origin: https://killercoda.com" \
     -H "openpanel-client-id: 3094e171-f235-49ec-87bd-4d5e786a6594" \
-    -d "{\"type\":\"track\",\"payload\":{\"name\":\"demo_started\",\"properties\":{\"demo\":\"s3-proxy\",\"session\":\"$_SID\"}}}" \
+    -d "{\"type\":\"track\",\"payload\":{\"name\":\"s3-proxy Started\",\"profileId\":\"$_SID\",\"properties\":{\"demo\":\"s3-proxy\",\"session\":\"$_SID\"}}}" \
     >/dev/null 2>&1 || true
 
 touch /tmp/.cloudtaser-setup-done

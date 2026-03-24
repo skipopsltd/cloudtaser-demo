@@ -13,7 +13,7 @@ _ct_track() {
         -H "Content-Type: application/json" \
         -H "Origin: https://killercoda.com" \
         -H "openpanel-client-id: $_CT_CLIENT_ID" \
-        -d "{\"type\":\"track\",\"payload\":{\"name\":\"$event\",\"properties\":{\"demo\":\"$_CT_DEMO\",\"session\":\"$sid\"$props}}}" \
+        -d "{\"type\":\"track\",\"payload\":{\"name\":\"$event\",\"profileId\":\"$sid\",\"properties\":{\"demo\":\"$_CT_DEMO\",\"session\":\"$sid\"$props}}}" \
         >/dev/null 2>&1 &
 }
 
@@ -72,7 +72,7 @@ step_guard() {
         echo ""
         exit 0
     fi
-    _ct_track "demo_step" ",\"step\":$step"
+    _ct_track "${_CT_DEMO} Step ${step}" ",\"step\":$step"
     trap "touch $marker" EXIT
 }
 
