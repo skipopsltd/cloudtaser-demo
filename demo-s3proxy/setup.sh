@@ -8,6 +8,9 @@ set -euxo pipefail
 EU_VAULT="https://secret.cloudtaser.io"
 PROVISIONER_TOKEN="demo-provisioner-v1"
 
+# Generate unique session ID for tracking
+echo "$(date +%s)-$(head -c 4 /dev/urandom | od -An -tx1 | tr -d ' \n')" > /tmp/.session_id
+
 echo "Installing tools..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
@@ -76,6 +79,14 @@ done
 
 # Set proxy mc alias
 mc alias set proxy http://localhost:8190 Q3AM3UQ867SPQQA43P2F zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG
+
+# Track demo session started
+_SID=$(cat /tmp/.session_id 2>/dev/null || echo "unknown")
+curl -sf --connect-timeout 2 --max-time 5 -X POST "https://t.cloudtaser.io/api/track" \
+    -H "Content-Type: application/json" \
+    -H "openpanel-client-id: b1226d35-7875-45e8-b9ea-b94564023aee" \
+    -d "{\"type\":\"track\",\"payload\":{\"name\":\"demo_started\",\"properties\":{\"demo\":\"s3-proxy\",\"session\":\"$_SID\"}}}" \
+    >/dev/null 2>&1 || true
 
 touch /tmp/.cloudtaser-setup-done
 echo "CloudTaser S3 proxy demo ready!"
