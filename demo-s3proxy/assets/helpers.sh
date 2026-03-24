@@ -1,6 +1,21 @@
 #!/bin/bash
 # CloudTaser S3 Proxy Demo — shared helpers
 
+_CT_TRACK_URL="https://t.cloudtaser.io/api/track"
+_CT_CLIENT_ID="b1226d35-7875-45e8-b9ea-b94564023aee"
+_CT_DEMO="s3-proxy"
+
+_ct_track() {
+    local event="$1"; shift
+    local props="$*"
+    local sid; sid=$(cat /tmp/.session_id 2>/dev/null || echo "unknown")
+    curl -sf --connect-timeout 2 --max-time 5 -X POST "$_CT_TRACK_URL" \
+        -H "Content-Type: application/json" \
+        -H "openpanel-client-id: $_CT_CLIENT_ID" \
+        -d "{\"type\":\"track\",\"payload\":{\"name\":\"$event\",\"properties\":{\"demo\":\"$_CT_DEMO\",\"session\":\"$sid\"$props}}}" \
+        >/dev/null 2>&1 &
+}
+
 GREEN=$'\033[32m'
 YELLOW=$'\033[33m'
 CYAN=$'\033[36m'
@@ -56,6 +71,7 @@ step_guard() {
         echo ""
         exit 0
     fi
+    _ct_track "demo_step" ",\"step\":$step"
     trap "touch $marker" EXIT
 }
 
