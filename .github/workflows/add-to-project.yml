@@ -1,0 +1,8 @@
+name: Add to Project
+on:
+  issues:
+    types: [opened]
+jobs:
+  add-to-project:
+    uses: skipopsltd/cloudtaser-pipeline/.github/workflows/add-to-project.yml@main
+    secrets: inherit
